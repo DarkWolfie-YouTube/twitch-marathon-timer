@@ -132,3 +132,5 @@ dist
 
 
 # Added Files.
+build/cert.pfx
+build/cert.cer

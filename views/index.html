@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Electron App</title>
+    <title>Twitch Marathon Timer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,9 +15,7 @@
             overflow: hidden;
             background-color: #454545;
         }
-        h1 {
-            color: #333;
-        }
+
         .titlebar {
             -webkit-app-region: drag;
             height: 32px;
@@ -25,18 +25,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 1000;
         }
+
         .titlebar-text {
             margin-left: 12px;
             font-size: 14px;
             font-weight: 500;
             color: #dcddde;
         }
+
         .titlebar-controls {
             -webkit-app-region: no-drag;
             display: flex;
             align-items: center;
         }
+
         .titlebar-button {
             -webkit-app-region: no-drag;
             height: 32px;
@@ -50,11 +54,57 @@
             align-items: center;
             cursor: pointer;
         }
+
         .titlebar-button:hover {
-            background: #dcddde
+            background: #2f3136;
         }
-        .titlebar-button.closeBtn:hover {
-            background: #f04747;
+
+        #close-button:hover {
+            background: #ed4245;
+            color: white;
+        }
+
+        .sidebar {
+            background: #2f3136;
+            width: 250px;
+            height: calc(100vh - 32px);
+            position: fixed;
+            left: 0;
+            top: 32px;
+            padding-top: 1rem;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            height: calc(100vh - 32px);
+            overflow-y: auto;
+        }
+
+        .nav-link {
+            color: #dcddde;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-link:hover {
+            background: #36393f;
+            color: #ffffff;
+        }
+
+        .nav-link.active {
+            background: #393c43;
+            color: #ffffff;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
         }
     </style>
 </head>
@@ -62,22 +112,153 @@
     <div class="titlebar">
         <div class="titlebar-text">Twitch Marathon Timer</div>
         <div class="titlebar-controls">
-            <button class="titlebar-button" id="minimizeBtn">─</button>
-            <button class="titlebar-button closeBtn" id="closeBtn">✕</button>
+            <button class="titlebar-button" id="minimize-button">
+                <i class="bi bi-dash-lg"></i>
+            </button>
+            <button class="titlebar-button" id="close-button">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
     </div>
-    <h1>Hello Electron!</h1>
-    <p>This is a basic Electron window.</p>
-    <script>
-        const remote = require('@electron/remote');
-        const win = remote.getCurrentWindow();
 
-        document.getElementById('minimizeBtn').addEventListener('click', () => {
-            win.minimize();
+    <div class="sidebar">
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#" data-section="home">
+                <i class="bi bi-house-door"></i>
+                Home
+            </a>
+            <a class="nav-link" href="#" data-section="settings">
+                <i class="bi bi-gear"></i>
+                Settings
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div id="home" class="content-section active">
+            <h2>Timer</h2>
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="display-1 text-center" id="timer">00:00:00</div>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <button class="btn btn-primary" id="start-timer">Start</button>
+                        <button class="btn btn-warning" id="pause-timer">Pause</button>
+                        <button class="btn btn-danger" id="reset-timer">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="content-section">
+            <h2>Settings</h2>
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Twitch Account</h5>
+                    <div id="twitch-login-section">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <img id="twitch-avatar" src="" class="rounded-circle d-none" style="width: 48px; height: 48px;" alt="Profile Picture">
+                            <div>
+                                <p class="mb-0" id="twitch-username">Not logged in</p>
+                                <small id="twitch-email" class="text-muted"></small>
+                            </div>
+                        </div>
+                        <button id="twitch-login-btn" class="btn btn-primary">
+                            <i class="bi bi-twitch me-2"></i>Login with Twitch
+                        </button>
+                        <button id="twitch-logout-btn" class="btn btn-outline-danger d-none">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Timer Settings</h5>
+                    <form id="settings-form">
+                        <div class="mb-3">
+                            <label for="timePerSub" class="form-label">Time per Subscription (minutes)</label>
+                            <input type="number" class="form-control bg-secondary text-white" id="timePerSub">
+                        </div>
+                        <div class="mb-3">
+                            <label for="timePerBit" class="form-label">Time per 100 Bits (minutes)</label>
+                            <input type="number" class="form-control bg-secondary text-white" id="timePerBit">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                link.classList.add('active');
+                const sectionId = link.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+            });
         });
 
-        document.getElementById('closeBtn').addEventListener('click', () => {
-            win.close();
+        // Window controls
+        document.getElementById('minimize-button').addEventListener('click', () => {
+            window.api.minimize();
+        });
+
+        document.getElementById('close-button').addEventListener('click', () => {
+            window.api.close();
+        });
+
+        // Twitch Authentication
+        const loginBtn = document.getElementById('twitch-login-btn');
+        const logoutBtn = document.getElementById('twitch-logout-btn');
+        const avatar = document.getElementById('twitch-avatar');
+        const username = document.getElementById('twitch-username');
+        const email = document.getElementById('twitch-email');
+
+        loginBtn.addEventListener('click', async () => {
+            await window.api.login();
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            await window.api.logout();
+            loginBtn.classList.remove('d-none');
+            logoutBtn.classList.add('d-none');
+            avatar.classList.add('d-none');
+            username.textContent = 'Not logged in';
+            email.textContent = '';
+        });
+
+        // Check initial login state
+        async function checkLoginState() {
+            const user = await window.api.getUser();
+            if (user) {
+                loginBtn.classList.add('d-none');
+                logoutBtn.classList.remove('d-none');
+                avatar.src = user.profile_image_url;
+                avatar.classList.remove('d-none');
+                username.textContent = user.display_name;
+                email.textContent = user.email;
+            }
+        }
+
+        checkLoginState();
+
+        // Listen for auth success using IPC
+        window.api.onAuthSuccess((user) => {
+            console.log('Auth success:', user);
+            loginBtn.classList.add('d-none');
+            logoutBtn.classList.remove('d-none');
+            avatar.src = user.profile_image_url;
+            avatar.classList.remove('d-none');
+            username.textContent = user.display_name;
+            email.textContent = user.email;
         });
     </script>
 </body>

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "node build.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,9 @@
   },
   "homepage": "https://github.com/DarkWolfie-YouTube/twitch-marathon-timer#readme",
   "dependencies": {
-    "@electron/remote": "^2.1.2"
+    "@electron/remote": "^2.1.2",
+    "dotenv": "^16.4.7",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "electron": "^33.2.1",
@@ -44,13 +46,18 @@
         "nsis",
         "portable"
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "certificateFile": "./build/cert.pfx",
+      "certificatePassword": "${env.CERT_PASSWORD}",
+      "publisherName": "DarkWolfieVT",
+      "signingHashAlgorithms": [
+        "sha256"
+      ]
     },
     "nsis": {
-        "oneClick": false,
-        "allowToChangeInstallationDirectory": true,
-        "createDesktopShortcut": true
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
     }
   }
 }
-      
