@@ -1,10 +1,12 @@
 {
   "name": "twitch-marathon-timer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Twitch Timer that reacts to certain eventsub events to add time to a timer based on configured settings.",
   "main": "index.js",
   "scripts": {
-    "test": "electron ."
+    "test": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "repository": {
     "type": "git",
@@ -25,7 +27,30 @@
   },
   "homepage": "https://github.com/DarkWolfie-YouTube/twitch-marathon-timer#readme",
   "dependencies": {
-    "@electron/remote": "^2.1.2",
-    "electron": "^33.2.1"
+    "@electron/remote": "^2.1.2"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.darkwolfie.twitchmarathontimer",
+    "productName": "Twitch Marathon Timer",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true,
+        "createDesktopShortcut": true
+    }
   }
 }
+      
