@@ -7,10 +7,9 @@ const fs = require('fs');
 const TimerManager = require('./timerManager');
 
 // Twitch OAuth Configuration
-const TWITCH_CLIENT_ID = 'si2tmmp70ies0z61129yafy7no821p';
-const TWITCH_CLIENT_SECRET = '';
+const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
 const TWITCH_REDIRECT_URI = 'http://localhost:3000';
-const TWITCH_SCOPES = ['user:read:email', 'channel:read:subscriptions'];
+const TWITCH_SCOPES = ['user:read:email', 'channel:read:subscriptions', "bits:read"];
 
 let mainWindow = null;
 let authWindow = null;
@@ -58,16 +57,7 @@ function createWindow() {
     timerManager.loadTimerState();
     
     // Check for existing valid token
-    const storedToken = authManager.getStoredToken();
-    if (storedToken) {
-        twitchAccessToken = storedToken.access_token;
-        twitchUser = storedToken;
-        mainWindow.webContents.send('twitch-auth-success', twitchUser);
-        console.log('User data:', twitchUser);
-    }
-    // Initialize EventSub client
-    eventSubClient = new EventSubClient();
-    eventSubClient.connect(mainWindow);
+    checkStoredToken();
 
     mainWindow.on('closed', () => {
         if (eventSubClient) {
@@ -134,10 +124,13 @@ async function handleAuthCallback(event, url) {
                 display_name: twitchUser.display_name,
                 profile_image_url: twitchUser.profile_image_url,
                 email: twitchUser.email,
-                scopes: TWITCH_SCOPES,
-                expires_in: 3600 // 1 hour
+                scopes: TWITCH_SCOPES
             };
-            authManager.saveToken(tokenData);
+            await authManager.saveToken(tokenData);
+            if (!eventSubClient) {
+                eventSubClient = new EventSubClient();
+                eventSubClient.connect(mainWindow);
+            }
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
@@ -148,13 +141,68 @@ async function handleAuthCallback(event, url) {
     }
 }
 
+async function checkStoredToken() {
+    try {
+        const storedToken = await authManager.getStoredToken();
+        if (storedToken) {
+            twitchAccessToken = storedToken.access_token;
+            twitchUser = storedToken;
+            mainWindow.webContents.send('twitch-auth-success', twitchUser);
+            
+            // Initialize EventSub client after successful token validation
+            if (!eventSubClient) {
+                eventSubClient = new EventSubClient();
+                eventSubClient.connect(mainWindow);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking stored token:', error);
+        mainWindow.webContents.send('twitch-auth-error', { message: 'Failed to validate token' });
+    }
+}
+
 // Global method to send auth success
 
 
 // IPC Handlers
-ipcMain.handle('twitch-auth-success', (event, user) => {
-    console.log('Handling auth success:', user);
-    return user;
+ipcMain.handle('save-twitch-token', async (event, tokenData) => {
+    try {
+        const success = await authManager.saveToken(tokenData);
+        if (success) {
+            twitchAccessToken = tokenData.access_token;
+            twitchUser = tokenData;
+            mainWindow.webContents.send('twitch-auth-success', twitchUser);
+            
+            // Initialize EventSub client after new token
+            if (!eventSubClient) {
+                eventSubClient = new EventSubClient();
+                eventSubClient.connect(mainWindow);
+            }
+            return { success: true };
+        } else {
+            return { success: false, error: 'Failed to save token' };
+        }
+    } catch (error) {
+        console.error('Error saving token:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('twitch-logout', async () => {
+    try {
+        if (eventSubClient) {
+            eventSubClient.disconnect();
+            eventSubClient = null;
+        }
+        authManager.clearToken();
+        twitchAccessToken = null;
+        twitchUser = null;
+        mainWindow.webContents.send('twitch-auth-logout');
+        return { success: true };
+    } catch (error) {
+        console.error('Error during logout:', error);
+        return { success: false, error: error.message };
+    }
 });
 
 ipcMain.on('request-user-info', (event) => {
@@ -177,18 +225,6 @@ ipcMain.handle('twitch-login', () => {
     createAuthWindow();
 });
 
-ipcMain.handle('twitch-logout', () => {
-    // Clear stored token
-    authManager.clearToken();
-    
-    // Reset authentication state
-    twitchAccessToken = null;
-    twitchUser = null;
-    
-    // Notify renderer
-    mainWindow.webContents.send('twitch-auth-logout');
-});
-
 ipcMain.handle('twitch-get-user', () => {
     return twitchUser;
 });
@@ -197,7 +233,7 @@ ipcMain.handle('twitch-get-user', () => {
 ipcMain.on('update-timer-settings', (event, settings) => {
     // Validate and update settings
     timerSettings = {
-        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 0.01,
+        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 1,
         tier1SubTime: parseFloat(settings.tier1SubTime) || 5,
         tier2SubTime: parseFloat(settings.tier2SubTime) || 10,
         tier3SubTime: parseFloat(settings.tier3SubTime) || 15

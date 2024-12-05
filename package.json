@@ -55,6 +55,41 @@
         "sha256"
       ]
     },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.utilities",
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "background": "build/background.png",
+      "icon": "build/icon.icns",
+      "iconSize": 128,
+      "contents": [
+        {
+          "x": 380,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 180,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
