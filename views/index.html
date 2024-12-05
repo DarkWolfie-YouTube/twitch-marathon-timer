@@ -136,14 +136,56 @@
 
     <div class="main-content">
         <div id="home" class="content-section active">
-            <h2>Timer</h2>
-            <div class="card bg-dark text-white">
+            <!-- Timer Display -->
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body text-center">
+                    <h2>Marathon Timer</h2>
+                    <div class="display-1 mb-3" id="timerDisplay">00:00:00</div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-success" id="startBtn">
+                            <i class="bi bi-play-fill"></i> Start
+                        </button>
+                        <button class="btn btn-warning" id="pauseBtn">
+                            <i class="bi bi-pause-fill"></i> Pause
+                        </button>
+                        <button class="btn btn-danger" id="resetBtn">
+                            <i class="bi bi-stop-fill"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Timer Controls -->
+            <div class="card bg-dark text-white mb-3">
                 <div class="card-body">
-                    <div class="display-1 text-center" id="timer">00:00:00</div>
-                    <div class="d-flex justify-content-center gap-2 mt-3">
-                        <button class="btn btn-primary" id="start-timer">Start</button>
-                        <button class="btn btn-warning" id="pause-timer">Pause</button>
-                        <button class="btn btn-danger" id="reset-timer">Reset</button>
+                    <h5 class="card-title">Timer Controls</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="timerSetSeconds" class="form-label">Set Timer Duration</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control bg-secondary text-white" id="setTimeInput" placeholder="Enter seconds" min="0">
+                                <button class="btn btn-primary" id="setTimeBtn">Set Timer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Quick Add Time</label>
+                            <div>
+                                <button class="btn btn-info me-2" id="addBitsTimeBtn">
+                                    <i class="bi bi-gem"></i> Add Bits Time
+                                </button>
+                                <button class="btn btn-secondary" id="tier1Btn">
+                                    <i class="bi bi-star"></i> Add Sub Time (Tier 1/ Prime)
+                                </button>
+                                <button class="btn btn-secondary" id="tier2Btn">
+                                    <i class="bi bi-star"></i> Add Sub Time (Tier 2)
+                                </button>
+                                <button class="btn btn-secondary" id="tier3Btn">
+                                    <i class="bi bi-star"></i> Add Sub Time (Tier 3)
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -159,7 +201,7 @@
                             <img id="twitch-avatar" src="" class="rounded-circle d-none" style="width: 48px; height: 48px;" alt="Profile Picture">
                             <div>
                                 <p class="mb-0" id="twitch-username">Not logged in</p>
-                                <small id="twitch-email" class="text-muted"></small>
+                                <small id="twitch-email" class="text"></small>
                             </div>
                         </div>
                         <button id="twitch-login-btn" class="btn btn-primary">
@@ -175,16 +217,34 @@
             <div class="card bg-dark text-white">
                 <div class="card-body">
                     <h5 class="card-title">Timer Settings</h5>
-                    <form id="settings-form">
-                        <div class="mb-3">
-                            <label for="timePerSub" class="form-label">Time per Subscription (minutes)</label>
-                            <input type="number" class="form-control bg-secondary text-white" id="timePerSub">
+                    <form id="settingsForm">
+                        <div class="form-group">
+                            <label for="bitsTimeIncrement">Bits Time Increment (minutes per bit)</label>
+                            <input type="number" class="form-control bg-secondary text-white" id="bitsTimeIncrement" min="0" step="0.01" value="0.01">
+                            <small class="form-text text-muted">How many minutes to add per bit donated</small>
                         </div>
-                        <div class="mb-3">
-                            <label for="timePerBit" class="form-label">Time per 100 Bits (minutes)</label>
-                            <input type="number" class="form-control bg-secondary text-white" id="timePerBit">
+                        <div class="form-group">
+                            <label>Subscription Tier Time Increments (minutes)</label>
+                            <div class="row">
+                                <div class="col">
+                                    <label for="tier1SubTime">Tier 1 / Prime</label>
+                                    <input type="number" class="form-control bg-secondary text-white" id="tier1SubTime" min="0" step="0.5" value="5">
+                                </div>
+                                <div class="col">
+                                    <label for="tier2SubTime">Tier 2</label>
+                                    <input type="number" class="form-control bg-secondary text-white" id="tier2SubTime" min="0" step="0.5" value="10">
+                                </div>
+                                <div class="col">
+                                    <label for="tier3SubTime">Tier 3</label>
+                                    <input type="number" class="form-control bg-secondary text-white" id="tier3SubTime" min="0" step="0.5" value="15">
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Minutes added to timer for each subscription tier</small>
                         </div>
                         <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <div id="settingsAlert" class="alert alert-success d-none mt-3" role="alert">
+                            Settings saved successfully!
+                        </div>
                     </form>
                 </div>
             </div>
@@ -260,6 +320,146 @@
             username.textContent = user.display_name;
             email.textContent = user.email;
         });
+
+        // Timer Controls
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const setTimeInput = document.getElementById('setTimeInput');
+        const setTimeBtn = document.getElementById('setTimeBtn');
+
+        let isTimerRunning = false;
+
+        startBtn.addEventListener('click', () => {
+            window.api.startTimer();
+            isTimerRunning = true;
+            updateTimerControls();
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            window.api.pauseTimer();
+            isTimerRunning = false;
+            updateTimerControls();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            window.api.resetTimer();
+            isTimerRunning = false;
+            updateTimerControls();
+        });
+
+        setTimeBtn.addEventListener('click', () => {
+            const seconds = parseInt(setTimeInput.value) || 0;
+            window.api.setTimerTime(seconds);
+        });
+
+        // Settings Management
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('timerSettings') || '{}');
+            
+            document.getElementById('bitsTimeIncrement').value = settings.bitsTimeIncrement || 0.01;
+            document.getElementById('tier1SubTime').value = settings.tier1SubTime || 5;
+            document.getElementById('tier2SubTime').value = settings.tier2SubTime || 10;
+            document.getElementById('tier3SubTime').value = settings.tier3SubTime || 15;
+        }
+
+        function saveSettings() {
+            const settings = {
+                bitsTimeIncrement: parseFloat(document.getElementById('bitsTimeIncrement').value) || 0.01,
+                tier1SubTime: parseInt(document.getElementById('tier1SubTime').value) || 5,
+                tier2SubTime: parseInt(document.getElementById('tier2SubTime').value) || 10,
+                tier3SubTime: parseInt(document.getElementById('tier3SubTime').value) || 15
+            };
+            
+            localStorage.setItem('timerSettings', JSON.stringify(settings));
+            
+            // Show success message
+            const settingsAlert = document.getElementById('settingsAlert');
+            settingsAlert.classList.remove('d-none');
+            settingsAlert.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                settingsAlert.classList.remove('show');
+                setTimeout(() => {
+                    settingsAlert.classList.add('d-none');
+                }, 150);
+            }, 3000);
+        }
+
+        // Settings form submit handler
+        document.getElementById('settingsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveSettings();
+        });
+
+        // Load settings when page loads
+        window.addEventListener('DOMContentLoaded', loadSettings);
+
+        // Bits button
+        document.getElementById('addBitsTimeBtn').addEventListener('click', () => {
+            const settings = JSON.parse(localStorage.getItem('timerSettings') || '{}');
+            window.api.addTimerTime(settings.bitsTimeIncrement * 60);
+        });
+
+        // Subscription tier buttons
+        document.getElementById('tier1Btn').addEventListener('click', () => {
+            const settings = JSON.parse(localStorage.getItem('timerSettings') || '{}');
+            window.api.addTimerTime(settings.tier1SubTime * 60);
+        });
+
+        document.getElementById('tier2Btn').addEventListener('click', () => {
+            const settings = JSON.parse(localStorage.getItem('timerSettings') || '{}');
+            window.api.addTimerTime(settings.tier2SubTime * 60);
+        });
+
+        document.getElementById('tier3Btn').addEventListener('click', () => {
+            const settings = JSON.parse(localStorage.getItem('timerSettings') || '{}');
+            window.api.addTimerTime(settings.tier3SubTime * 60);
+        });
+
+        // Timer update handler
+        window.api.onTimerUpdate((data) => {
+           
+            const hours = Math.floor(data.remainingSeconds / 3600);
+            const minutes = Math.floor((data.remainingSeconds % 3600) / 60);
+            const seconds = data.remainingSeconds % 60;
+            let finaltext = null;
+            if (hours < 10) {
+                finaltext = '0' + hours;
+            } else {
+                finaltext = hours;
+            }
+            finaltext += ':';
+            if (minutes < 10) {
+                finaltext += '0' + minutes;
+            } else {
+                finaltext += minutes;
+            }
+            finaltext += ':';
+            if (seconds < 10) {
+                finaltext += '0' + seconds;
+            } else {
+                finaltext += seconds;
+            }
+            timerDisplay.textContent = finaltext;
+            isTimerRunning = data.isRunning;
+            updateTimerControls();
+        });
+
+        // Only update timer-related controls
+        function updateTimerControls() {
+            startBtn.disabled = isTimerRunning;
+            pauseBtn.disabled = !isTimerRunning;
+            if (isTimerRunning) {
+                setTimeBtn.disabled = true;
+                setTimeInput.disabled = true;
+            } else {
+                setTimeBtn.disabled = false;
+                setTimeInput.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>

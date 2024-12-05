@@ -3,9 +3,12 @@ const path = require('node:path');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const EventSubClient = require('./eventSubClient');
 const AuthManager = require('./authManager');
+const fs = require('fs');
+const TimerManager = require('./timerManager');
 
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'si2tmmp70ies0z61129yafy7no821p';
+const TWITCH_CLIENT_SECRET = '';
 const TWITCH_REDIRECT_URI = 'http://localhost:3000';
 const TWITCH_SCOPES = ['user:read:email', 'channel:read:subscriptions'];
 
@@ -15,8 +18,20 @@ let twitchAccessToken = null;
 let twitchUser = null;
 let eventSubClient = null;
 let authManager = null;
+let timerManager = null;
+
+// Timer Settings Management
+let timerSettings = {
+    bitsTimeIncrement: 0.01,
+    tier1SubTime: 5,
+    tier2SubTime: 10,
+    tier3SubTime: 15
+};
 
 function createWindow() {
+    // Load saved settings before creating window
+    loadSavedSettings();
+
     mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
@@ -38,7 +53,10 @@ function createWindow() {
     // Initialize AuthManager with user data path
     const userDataPath = app.getPath('userData');
     authManager = new AuthManager(userDataPath);
-
+    timerManager = new TimerManager();
+    timerManager.setMainWindow(mainWindow);
+    timerManager.loadTimerState();
+    
     // Check for existing valid token
     const storedToken = authManager.getStoredToken();
     if (storedToken) {
@@ -55,6 +73,10 @@ function createWindow() {
         if (eventSubClient) {
             eventSubClient.disconnect();
         }
+        if (timerManager) {
+            timerManager.pauseTimer();
+        }
+        mainWindow = null;
     });
 }
 
@@ -169,6 +191,80 @@ ipcMain.handle('twitch-logout', () => {
 
 ipcMain.handle('twitch-get-user', () => {
     return twitchUser;
+});
+
+// IPC Handler for updating timer settings
+ipcMain.on('update-timer-settings', (event, settings) => {
+    // Validate and update settings
+    timerSettings = {
+        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 0.01,
+        tier1SubTime: parseFloat(settings.tier1SubTime) || 5,
+        tier2SubTime: parseFloat(settings.tier2SubTime) || 10,
+        tier3SubTime: parseFloat(settings.tier3SubTime) || 15
+    };
+    
+    // Optional: Persist settings to a file or database
+    try {
+        const settingsPath = path.join(app.getPath('userData'), 'timer_settings.json');
+        fs.writeFileSync(settingsPath, JSON.stringify(timerSettings), 'utf-8');
+    } catch (error) {
+        console.error('Error saving timer settings:', error);
+    }
+});
+
+// IPC Handler to get current timer settings
+ipcMain.handle('get-timer-settings', () => {
+    return timerSettings;
+});
+
+// Load saved settings on app startup
+function loadSavedSettings() {
+    try {
+        const settingsPath = path.join(app.getPath('userData'), 'timer_settings.json');
+        if (fs.existsSync(settingsPath)) {
+            const savedSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+            timerSettings = {
+                bitsTimeIncrement: parseFloat(savedSettings.bitsTimeIncrement) || 0.01,
+                tier1SubTime: parseFloat(savedSettings.tier1SubTime) || 5,
+                tier2SubTime: parseFloat(savedSettings.tier2SubTime) || 10,
+                tier3SubTime: parseFloat(savedSettings.tier3SubTime) || 15
+            };
+        }
+    } catch (error) {
+        console.error('Error loading timer settings:', error);
+    }
+}
+
+
+// Timer IPC handlers
+ipcMain.on('set-timer-time', (event, time) => {
+    if (timerManager) {
+        timerManager.setTime(time);
+    }
+});
+
+ipcMain.on('start-timer', () => {
+    if (timerManager) {
+        timerManager.startTimer();
+    }
+});
+
+ipcMain.on('pause-timer', () => {
+    if (timerManager) {
+        timerManager.pauseTimer();
+    }
+});
+
+ipcMain.on('reset-timer', () => {
+    if (timerManager) {
+        timerManager.resetTimer();
+    }
+});
+
+ipcMain.on('add-timer-time', (event, seconds) => {
+    if (timerManager) {
+        timerManager.addTime(seconds);
+    }
 });
 
 app.whenReady().then(createWindow);
