@@ -75,28 +75,15 @@ jobs:
           path: artifacts
 
       - name: Create Release
-        uses: elgohr/Github-Release-Action@v5
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          title: Twitch Marathon Timer v${{ github.ref_name }}
+          name: Twitch Marathon Timer ${{ github.ref_name }}
+          files: |
+            ./artifacts/windows-artifact/*.exe
+            ./artifacts/macos-artifact/*.dmg
+          body_path: ./CHANGELOG.md
+          prerelease: true
 
-      - name: Upload Windows Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/windows-artifact/Twitch Marathon Timer Setup*.exe
-          asset_name: TMT-v${{ github.ref_name }}-setup-win.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
-
-      - name: Upload macOS Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/macos-artifact/Twitch Marathon Timer*.dmg
-          asset_name: TMT-v${{ github.ref_name }}-setup-mac.dmg
-          asset_content_type: application/x-apple-diskimage
+      
