@@ -48,6 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/Twitch Marathon Timer Setup.exe
+          asset_path: ./dist/Twitch Marathon Timer Setup ${{ github.ref }}.exe
           asset_name: TMT-v${{ github.ref }}-setup-win.exe
           asset_content_type: application/vnd.microsoft.portable-executable
