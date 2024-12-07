@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
+const WebSocketServer = require('./websocketServer');
 
 class TimerManager {
     constructor() {
@@ -12,6 +13,7 @@ class TimerManager {
         };
         this.timerInterval = null;
         this.mainWindow = null;
+        this.wsServer = new WebSocketServer(42069);
         this.loadTimerState();
     }
 
@@ -19,6 +21,11 @@ class TimerManager {
         this.mainWindow = window;
         // Send initial state to renderer
         this.updateRendererTime();
+        
+        // Listen for settings updates
+        window.webContents.on('update-timer-settings', (event, settings) => {
+            this.wsServer.updateTheme(settings);
+        });
     }
 
     loadTimerState() {
@@ -102,6 +109,8 @@ class TimerManager {
                 remainingSeconds: this.timerState.remainingSeconds,
                 isRunning: this.timerState.isRunning
             });
+            // Broadcast to WebSocket clients
+            this.wsServer.broadcastTimerState(this.timerState);
         }
     }
 

@@ -1,12 +1,13 @@
 {
   "name": "twitch-marathon-timer",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "A Twitch Timer that reacts to certain eventsub events to add time to a timer based on configured settings.",
   "main": "index.js",
   "scripts": {
     "test": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "node build.js"
+    "build": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
   },
   "repository": {
     "type": "git",
@@ -37,63 +38,44 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.darkwolfie.twitchmarathontimer",
+    "appId": "com.darkwolfievt.twitchmarathontimer",
     "productName": "Twitch Marathon Timer",
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!LICENSE.md",
+      "!package.json",
+      "!package-lock.json",
+      "!src/",
+      "!e2e/",
+      "!hooks/",
+      "!.angular/",
+      "!*.map",
+      "!*.md"
+    ],
     "win": {
       "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico",
-      "certificateFile": "./build/cert.pfx",
-      "certificatePassword": "${env.CERT_PASSWORD}",
-      "publisherName": "DarkWolfieVT",
-      "signingHashAlgorithms": [
-        "sha256"
-      ]
-    },
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "icon": "build/icon.icns",
-      "category": "public.app-category.utilities",
-      "darkModeSupport": true,
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
-    },
-    "dmg": {
-      "background": "build/background.png",
-      "icon": "build/icon.icns",
-      "iconSize": 128,
-      "contents": [
         {
-          "x": 380,
-          "y": 180,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 180,
-          "type": "file"
+          "target": "nsis",
+          "arch": ["x64"]
         }
       ],
-      "window": {
-        "width": 540,
-        "height": 380
-      }
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Twitch Marathon Timer"
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "draft"
     }
   }
 }

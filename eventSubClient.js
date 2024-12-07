@@ -1,6 +1,12 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fs = require('fs');
+const path = require('path');
+const { app } = require('electron');
+
+const userDataPath = app.getPath('userData');
+
 
 class EventSubClient {
     constructor() {
@@ -15,18 +21,14 @@ class EventSubClient {
         this.closedByUser = false;
 
         // Default timer settings
-        this.timerSettings = {
-            bitsTimeIncrement: 1,
-            tier1SubTime: 5,
-            tier2SubTime: 10,
-            tier3SubTime: 15
-        };
+        this.timerSettings = JSON.parse(fs.readFileSync(path.join(userDataPath, 'timer_settings.json'), 'utf-8'));
     }
 
     async connect(mainWindow) {
         try {
             this.mainWindow = mainWindow;
             this.ws = new WebSocket('ws://localhost:8080/ws');
+
 
             this.ws.on('open', () => {
                 console.log('Connected to mock EventSub WebSocket server');
@@ -63,7 +65,6 @@ class EventSubClient {
     }
 
     async handleMessage(message) {
-        console.log(message)
         switch (message.metadata.message_type) {
             case 'session_welcome':
                 this.sessionId = message.payload.session.id;
@@ -160,7 +161,8 @@ class EventSubClient {
     }
 
     async handleNotification(payload) {
-        const { subscription, event } = payload;
+        const subscription = payload.subscription;
+        const event = payload.event;
 
         switch (subscription.type) {
             case 'channel.subscribe':
@@ -183,13 +185,13 @@ class EventSubClient {
         
         switch (event.tier) {
             case '1000': // Tier 1
-                timeToAdd = this.timerSettings.tier1SubTime;
+                timeToAdd = this.timerSettings.tier1SubTime * 60;
                 break;
             case '2000': // Tier 2
-                timeToAdd = this.timerSettings.tier2SubTime;
+                timeToAdd = this.timerSettings.tier2SubTime * 60;
                 break;
             case '3000': // Tier 3
-                timeToAdd = this.timerSettings.tier3SubTime;
+                timeToAdd = this.timerSettings.tier3SubTime * 60;
                 break;
         }
 
@@ -209,13 +211,13 @@ class EventSubClient {
         
         switch (event.tier) {
             case '1000': // Tier 1
-                timeToAdd = this.timerSettings.tier1SubTime * totalGifts;
+                timeToAdd = (this.timerSettings.tier1SubTime * totalGifts) * 60;
                 break;
             case '2000': // Tier 2
-                timeToAdd = this.timerSettings.tier2SubTime * totalGifts;
+                timeToAdd = (this.timerSettings.tier2SubTime * totalGifts) * 60;
                 break;
             case '3000': // Tier 3
-                timeToAdd = this.timerSettings.tier3SubTime * totalGifts;
+                timeToAdd = (this.timerSettings.tier3SubTime * totalGifts) * 60;
                 break;
         }
 
@@ -228,7 +230,7 @@ class EventSubClient {
     }
 
     async handleCheer(event) {
-        const timeToAdd = this.timerSettings.bitsTimeIncrement * event.bits;
+        const timeToAdd = (this.timerSettings.bitsTimeIncrement * event.bits) * 60;
         
         this.mainWindow.webContents.send('timer-increment', {
             timeToAdd: timeToAdd,

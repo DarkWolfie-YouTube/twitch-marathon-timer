@@ -46,5 +46,7 @@ contextBridge.exposeInMainWorld('api', {
     },
     onTimerUpdate: (callback) => {
         ipcRenderer.on('timer-update', (_, data) => callback(data));
-    }
+    },
+    // Overlay Path
+    getOverlayPath: () => ipcRenderer.invoke('get-overlay-path')
 });

@@ -65,46 +65,258 @@
         }
 
         .sidebar {
-            background: #2f3136;
-            width: 250px;
-            height: calc(100vh - 32px);
+            width: 200px;
+            min-height: 100vh;
+            background-color: #1f1f1f;
+            padding: 20px;
             position: fixed;
             left: 0;
-            top: 32px;
-            padding-top: 1rem;
+            top: 0;
         }
 
         .main-content {
-            margin-left: 250px;
-            padding: 2rem;
-            height: calc(100vh - 32px);
-            overflow-y: auto;
+            margin-left: 200px;
+            padding: 20px;
         }
 
         .nav-link {
-            color: #dcddde;
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
         }
 
         .nav-link:hover {
-            background: #36393f;
+            background-color: #2f2f2f;
             color: #ffffff;
         }
 
         .nav-link.active {
-            background: #393c43;
+            background-color: #0d6efd;
             color: #ffffff;
         }
 
-        .content-section {
-            display: none;
+        .nav-link i {
+            margin-right: 8px;
         }
 
-        .content-section.active {
+        .card.bg-dark.text-white.mb-3 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .card.bg-dark.text-white {
+            background-color: #2f3136;
+            color: #dcddde;
+        }
+
+        .card-body.text-center {
+            text-align: center;
+        }
+
+        .display-1.mb-3 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .d-flex.justify-content-center.gap-2 {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn.btn-success {
+            background-color: #3ba55d;
+            color: #ffffff;
+            border-color: #3ba55d;
+        }
+
+        .btn.btn-warning {
+            background-color: #f7dc6f;
+            color: #000000;
+            border-color: #f7dc6f;
+        }
+
+        .btn.btn-danger {
+            background-color: #ed4245;
+            color: #ffffff;
+            border-color: #ed4245;
+        }
+
+        .card.bg-dark.text-white.mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .card.bg-dark.text-white {
+            background-color: #2f3136;
+            color: #dcddde;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .card-title {
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control.bg-secondary.text-white {
+            background-color: #2f3136;
+            color: #dcddde;
+            border-color: #2f3136;
+        }
+
+        .form-control {
             display: block;
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #dcddde;
+            background-color: #2f3136;
+            background-clip: padding-box;
+            border: 1px solid #2f3136;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .btn.btn-primary {
+            background-color: #0d6efd;
+            color: #ffffff;
+            border-color: #0d6efd;
+        }
+
+        .btn.btn-info {
+            background-color: #63ace5;
+            color: #ffffff;
+            border-color: #63ace5;
+        }
+
+        .btn.btn-secondary {
+            background-color: #6c757d;
+            color: #ffffff;
+            border-color: #6c757d;
+        }
+
+        .btn.btn-outline-danger {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn.btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.2rem;
+        }
+
+        .alert.alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c6ebd9;
+        }
+
+        .alert {
+            position: relative;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        .d-flex {
+            display: flex !important;
+        }
+
+        .justify-content-center {
+            justify-content: center !important;
+        }
+
+        .gap-2 {
+            gap: 0.5rem !important;
+        }
+
+        .mb-0 {
+            margin-bottom: 0 !important;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .mt-3 {
+            margin-top: 1rem !important;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        .text-success {
+            color: #198754 !important;
+        }
+
+        .text-white {
+            color: #ffffff !important;
+        }
+
+        .rounded-circle {
+            border-radius: 50% !important;
+        }
+
+        #settings {
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        #settings::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #settings::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        #settings::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        #settings::-webkit-scrollbar-thumb:hover {
+            background: #444;
         }
     </style>
 </head>
@@ -122,130 +334,194 @@
     </div>
 
     <div class="sidebar">
-        <nav class="nav flex-column">
-            <a class="nav-link active" href="#" data-section="home">
-                <i class="bi bi-house-door"></i>
-                Home
-            </a>
-            <a class="nav-link" href="#" data-section="settings">
+        <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+            <button class="nav-link active mb-2" id="timer-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="timer" aria-selected="true">
+                <i class="bi bi-clock"></i>
+                Timer
+            </button>
+            <button class="nav-link mb-2" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
                 <i class="bi bi-gear"></i>
                 Settings
-            </a>
-        </nav>
+            </button>
+            <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log" type="button" role="tab" aria-controls="log" aria-selected="false">
+                <i class="bi bi-journal-text"></i>
+                Event Log
+            </button>
+        </div>
     </div>
 
     <div class="main-content">
-        <div id="home" class="content-section active">
-            <!-- Timer Display -->
-            <div class="card bg-dark text-white mb-3">
-                <div class="card-body text-center">
-                    <h2>Marathon Timer</h2>
-                    <div class="display-1 mb-3" id="timerDisplay">00:00:00</div>
-                    <div class="d-flex justify-content-center gap-2">
-                        <button class="btn btn-success" id="startBtn">
-                            <i class="bi bi-play-fill"></i> Start
-                        </button>
-                        <button class="btn btn-warning" id="pauseBtn">
-                            <i class="bi bi-pause-fill"></i> Pause
-                        </button>
-                        <button class="btn btn-danger" id="resetBtn">
-                            <i class="bi bi-stop-fill"></i> Reset
-                        </button>
-                    </div>
-                </div>
-            </div>
-        
-            <!-- Timer Controls -->
-            <div class="card bg-dark text-white mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Timer Controls</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="timerSetSeconds" class="form-label">Set Timer Duration</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control bg-secondary text-white" id="setTimeInput" placeholder="Enter seconds" min="0">
-                                <button class="btn btn-primary" id="setTimeBtn">Set Timer</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label class="form-label">Quick Add Time</label>
-                            <div>
-                                <button class="btn btn-info me-2" id="addBitsTimeBtn">
-                                    <i class="bi bi-gem"></i> Add Bits Time
-                                </button>
-                                <button class="btn btn-secondary" id="tier1Btn">
-                                    <i class="bi bi-star"></i> Add Sub Time (Tier 1/ Prime)
-                                </button>
-                                <button class="btn btn-secondary" id="tier2Btn">
-                                    <i class="bi bi-star"></i> Add Sub Time (Tier 2)
-                                </button>
-                                <button class="btn btn-secondary" id="tier3Btn">
-                                    <i class="bi bi-star"></i> Add Sub Time (Tier 3)
-                                </button>
-                            </div>
+        <div class="tab-content" id="myTabContent">
+            <div id="home" class="tab-pane fade show active" role="tabpanel" aria-labelledby="timer-tab">
+                <!-- Timer Display -->
+                <div class="card bg-dark text-white mb-3">
+                    <div class="card-body text-center">
+                        <h2>Marathon Timer</h2>
+                        <div class="display-1 mb-3" id="timerDisplay">00:00:00</div>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-success" id="startBtn">
+                                <i class="bi bi-play-fill"></i> Start
+                            </button>
+                            <button class="btn btn-warning" id="pauseBtn">
+                                <i class="bi bi-pause-fill"></i> Pause
+                            </button>
+                            <button class="btn btn-danger" id="resetBtn">
+                                <i class="bi bi-stop-fill"></i> Reset
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div id="settings" class="content-section">
-            <h2>Settings</h2>
-            <div class="card bg-dark text-white mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Twitch Account</h5>
-                    <div id="twitch-login-section">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <img id="twitch-avatar" src="" class="rounded-circle d-none" style="width: 48px; height: 48px;" alt="Profile Picture">
-                            <div>
-                                <p class="mb-0" id="twitch-username">Not logged in</p>
-                                <small id="twitch-email" class="text"></small>
-                            </div>
-                        </div>
-                        <button id="twitch-login-btn" class="btn btn-primary">
-                            <i class="bi bi-twitch me-2"></i>Login with Twitch
-                        </button>
-                        <button id="twitch-logout-btn" class="btn btn-outline-danger d-none">
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
             
-            <div class="card bg-dark text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Timer Settings</h5>
-                    <form id="settingsForm">
-                        <div class="form-group">
-                            <label for="bitsTimeIncrement">Bits Time Increment (minutes per bit)</label>
-                            <input type="number" class="form-control bg-secondary text-white" id="bitsTimeIncrement" min="0" step="1" value="1">
-                            <small class="form-text text-muted">How many minutes to add per bit donated</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Subscription Tier Time Increments (minutes)</label>
-                            <div class="row">
-                                <div class="col">
-                                    <label for="tier1SubTime">Tier 1 / Prime</label>
-                                    <input type="number" class="form-control bg-secondary text-white" id="tier1SubTime" min="0" step="0.5" value="5">
-                                </div>
-                                <div class="col">
-                                    <label for="tier2SubTime">Tier 2</label>
-                                    <input type="number" class="form-control bg-secondary text-white" id="tier2SubTime" min="0" step="0.5" value="10">
-                                </div>
-                                <div class="col">
-                                    <label for="tier3SubTime">Tier 3</label>
-                                    <input type="number" class="form-control bg-secondary text-white" id="tier3SubTime" min="0" step="0.5" value="15">
+                <!-- Timer Controls -->
+                <div class="card bg-dark text-white mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Timer Controls</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="timerSetSeconds" class="form-label">Set Timer Duration</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control bg-secondary text-white" id="setTimeInput" placeholder="Enter seconds" min="0">
+                                    <button class="btn btn-primary" id="setTimeBtn">Set Timer</button>
                                 </div>
                             </div>
-                            <small class="form-text text-muted">Minutes added to timer for each subscription tier</small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Save Settings</button>
-                        <div id="settingsAlert" class="alert alert-success d-none mt-3" role="alert">
-                            Settings saved successfully!
+                        <div class="row">
+                            <div class="col">
+                                <label class="form-label">Quick Add Time</label>
+                                <div>
+                                    <button class="btn btn-info me-2" id="addBitsTimeBtn">
+                                        <i class="bi bi-gem"></i> Add Bits Time
+                                    </button>
+                                    <button class="btn btn-secondary" id="tier1Btn">
+                                        <i class="bi bi-star"></i> Add Sub Time (Tier 1/ Prime)
+                                    </button>
+                                    <button class="btn btn-secondary" id="tier2Btn">
+                                        <i class="bi bi-star"></i> Add Sub Time (Tier 2)
+                                    </button>
+                                    <button class="btn btn-secondary" id="tier3Btn">
+                                        <i class="bi bi-star"></i> Add Sub Time (Tier 3)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings" class="tab-pane fade" role="tabpanel" aria-labelledby="settings-tab">
+                <h2>Settings</h2>
+                <div class="card bg-dark text-white mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Twitch Account</h5>
+                        <div id="twitch-login-section">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <img id="twitch-avatar" src="" class="rounded-circle d-none" style="width: 48px; height: 48px;" alt="Profile Picture">
+                                <div>
+                                    <p class="mb-0" id="twitch-username">Not logged in</p>
+                                    <small id="twitch-email" class="text"></small>
+                                </div>
+                            </div>
+                            <button id="twitch-login-btn" class="btn btn-primary">
+                                <i class="bi bi-twitch me-2"></i>Login with Twitch
+                            </button>
+                            <button id="twitch-logout-btn" class="btn btn-outline-danger d-none">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card bg-dark text-white mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">OBS Overlay URL</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control bg-secondary text-white" id="overlayPath" readonly>
+                            <button class="btn btn-primary" id="copyOverlayPath">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <small class="text-muted">Add this as a Browser Source in OBS</small>
+                    </div>
+                </div>
+
+                <div class="card bg-dark text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Timer Settings</h5>
+                        <form id="settingsForm">
+                            <div class="form-group">
+                                <label for="bitsTimeIncrement">Bits Time Increment (minutes per bit)</label>
+                                <input type="number" class="form-control bg-secondary text-white" id="bitsTimeIncrement" min="0" step="1" value="1">
+                                <small class="form-text text-muted">How many minutes to add per bit donated</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Subscription Tier Time Increments (minutes)</label>
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="tier1SubTime">Tier 1 / Prime</label>
+                                        <input type="number" class="form-control bg-secondary text-white" id="tier1SubTime" min="0" step="0.5" value="5">
+                                    </div>
+                                    <div class="col">
+                                        <label for="tier2SubTime">Tier 2</label>
+                                        <input type="number" class="form-control bg-secondary text-white" id="tier2SubTime" min="0" step="0.5" value="10">
+                                    </div>
+                                    <div class="col">
+                                        <label for="tier3SubTime">Tier 3</label>
+                                        <input type="number" class="form-control bg-secondary text-white" id="tier3SubTime" min="0" step="0.5" value="15">
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Minutes added to timer for each subscription tier</small>
+                            </div>
+                            <div class="form-group mt-4">
+                                <h6>Overlay Theme Settings</h6>
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="overlayBackground">Background Color</label>
+                                        <input type="color" class="form-control form-control-color bg-secondary" id="overlayBackground" value="#1f1f1f">
+                                    </div>
+                                    <div class="col">
+                                        <label for="overlayText">Text Color</label>
+                                        <input type="color" class="form-control form-control-color bg-secondary" id="overlayText" value="#ffffff">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col">
+                                        <label for="overlayFont">Font Family</label>
+                                        <select class="form-select bg-secondary text-white" id="overlayFont">
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Arial">Arial</option>
+                                            <option value="Helvetica">Helvetica</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Verdana">Verdana</option>
+                                        </select>
+                                    </div>
+                                    <div class="col">
+                                        <label for="overlayFontSize">Font Size</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control bg-secondary text-white" id="overlayFontSize" value="48" min="12" max="120">
+                                            <span class="input-group-text bg-secondary text-white">px</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                            <div id="settingsAlert" class="alert alert-success d-none mt-3" role="alert">
+                                Settings saved successfully!
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Tab -->
+            <div id="log" class="tab-pane fade" role="tabpanel" aria-labelledby="log-tab">
+                <div class="card bg-dark text-white mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Event Log</h5>
+                        <button class="btn btn-outline-danger btn-sm" onclick="clearEventLog()">Clear Log</button>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        <div id="eventLog" class="small"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -258,11 +534,11 @@
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.content-section, .tab-pane').forEach(s => s.classList.remove('active', 'show'));
                 
                 link.classList.add('active');
-                const sectionId = link.getAttribute('data-section');
-                document.getElementById(sectionId).classList.add('active');
+                const sectionId = link.getAttribute('data-bs-target');
+                document.querySelector(sectionId).classList.add('active', 'show');
             });
         });
 
@@ -362,6 +638,10 @@
             document.getElementById('tier1SubTime').value = settings.tier1SubTime || 5;
             document.getElementById('tier2SubTime').value = settings.tier2SubTime || 10;
             document.getElementById('tier3SubTime').value = settings.tier3SubTime || 15;
+            document.getElementById('overlayBackground').value = settings.overlayBackground || '#1f1f1f';
+            document.getElementById('overlayText').value = settings.overlayText || '#ffffff';
+            document.getElementById('overlayFont').value = settings.overlayFont || 'Courier New';
+            document.getElementById('overlayFontSize').value = settings.overlayFontSize || 48;
         }
 
         function saveSettings() {
@@ -369,12 +649,21 @@
                 bitsTimeIncrement: parseFloat(document.getElementById('bitsTimeIncrement').value) || 0.01,
                 tier1SubTime: parseInt(document.getElementById('tier1SubTime').value) || 5,
                 tier2SubTime: parseInt(document.getElementById('tier2SubTime').value) || 10,
-                tier3SubTime: parseInt(document.getElementById('tier3SubTime').value) || 15
+                tier3SubTime: parseInt(document.getElementById('tier3SubTime').value) || 15,
+                overlayBackground: document.getElementById('overlayBackground').value,
+                overlayText: document.getElementById('overlayText').value,
+                overlayFont: document.getElementById('overlayFont').value,
+                overlayFontSize: parseInt(document.getElementById('overlayFontSize').value) || 48
             };
             
             localStorage.setItem('timerSettings', JSON.stringify(settings));
+            console.log('Settings saved:', settings);
+
+            // Update timer settings
+            window.api.sendSettingsUpdate(settings);
             
             // Show success message
+            console.log('Settings saved successfully!');
             const settingsAlert = document.getElementById('settingsAlert');
             settingsAlert.classList.remove('d-none');
             settingsAlert.classList.add('show');
@@ -421,28 +710,24 @@
 
         // Timer update handler
         window.api.onTimerUpdate((data) => {
-           
-            const hours = Math.floor(data.remainingSeconds / 3600);
+            const days = Math.floor(data.remainingSeconds / 86400);
+            const hours = Math.floor((data.remainingSeconds % 86400) / 3600);
             const minutes = Math.floor((data.remainingSeconds % 3600) / 60);
             const seconds = data.remainingSeconds % 60;
-            let finaltext = null;
-            if (hours < 10) {
-                finaltext = '0' + hours;
-            } else {
-                finaltext = hours;
-            }
-            finaltext += ':';
-            if (minutes < 10) {
-                finaltext += '0' + minutes;
-            } else {
-                finaltext += minutes;
-            }
-            finaltext += ':';
-            if (seconds < 10) {
-                finaltext += '0' + seconds;
-            } else {
-                finaltext += seconds;
-            }
+            let finaltext = '';
+
+            // Days
+            finaltext = String(days).padStart(2, '0') + ':';
+            
+            // Hours
+            finaltext += String(hours).padStart(2, '0') + ':';
+            
+            // Minutes
+            finaltext += String(minutes).padStart(2, '0') + ':';
+            
+            // Seconds
+            finaltext += String(seconds).padStart(2, '0');
+            
             timerDisplay.textContent = finaltext;
             isTimerRunning = data.isRunning;
             updateTimerControls();
@@ -460,6 +745,64 @@
                 setTimeInput.disabled = false;
             }
         }
+
+        // Add these functions for event logging
+        function addEventToLog(event) {
+            const eventLog = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'mb-2';
+            
+            // Format minutes for display
+            const minutes = Math.floor(event.timeToAdd / 60);
+            const timeDisplay = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            
+            eventDiv.innerHTML = `
+                <span class="text-muted">[${timestamp}]</span>
+                <span class="text-success">+${timeDisplay}</span>
+                <span class="text-white">${event.reason}</span>
+            `;
+            
+            eventLog.insertBefore(eventDiv, eventLog.firstChild);
+            
+            // Keep only last 100 events
+            while (eventLog.children.length > 100) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        function clearEventLog() {
+            const eventLog = document.getElementById('eventLog');
+            eventLog.innerHTML = '';
+        }
+
+        // Handle Timer increment event
+        window.api.onTimerIncrement((data) => {
+            window.api.addTimerTime(data.timeToAdd);
+            addEventToLog(data);
+        });
+
+        // Initialize overlay path
+        const overlayPathInput = document.getElementById('overlayPath');
+        const copyOverlayPathBtn = document.getElementById('copyOverlayPath');
+
+        // Get and display overlay path
+        window.api.getOverlayPath().then(path => {
+            overlayPathInput.value = path;
+        });
+
+        // Copy overlay path
+        copyOverlayPathBtn.addEventListener('click', () => {
+            overlayPathInput.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const originalText = copyOverlayPathBtn.innerHTML;
+            copyOverlayPathBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                copyOverlayPathBtn.innerHTML = originalText;
+            }, 2000);
+        });
     </script>
 </body>
 </html>

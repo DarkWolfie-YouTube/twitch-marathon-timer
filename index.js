@@ -18,6 +18,7 @@ let twitchUser = null;
 let eventSubClient = null;
 let authManager = null;
 let timerManager = null;
+let overlayPath = null;
 
 // Timer Settings Management
 let timerSettings = {
@@ -27,7 +28,37 @@ let timerSettings = {
     tier3SubTime: 15
 };
 
+let themeSettings = {
+    overlayBackground: '#1f1f1f',
+    overlayText: '#ffffff',
+    overlayFont: 'Courier New',
+    overlayFontSize: 48
+};
+
+function ensureOverlayFile() {
+    const userDataPath = app.getPath('userData');
+    const overlayDir = path.join(userDataPath, 'overlay');
+    const targetPath = path.join(overlayDir, 'websocket-client.html');
+
+    // Create overlay directory if it doesn't exist
+    if (!fs.existsSync(overlayDir)) {
+        fs.mkdirSync(overlayDir, { recursive: true });
+    }
+
+    // Copy overlay file if it doesn't exist or if we're in development
+    const sourceFile = path.join(__dirname, 'views', 'websocket-client.html');
+    if (!fs.existsSync(targetPath) || !app.isPackaged) {
+        fs.copyFileSync(sourceFile, targetPath);
+    }
+
+    overlayPath = targetPath;
+    return targetPath;
+}
+
 function createWindow() {
+    // Ensure overlay file is extracted
+    ensureOverlayFile();
+
     // Load saved settings before creating window
     loadSavedSettings();
 
@@ -55,7 +86,7 @@ function createWindow() {
     timerManager = new TimerManager();
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
-    
+
     // Check for existing valid token
     checkStoredToken();
 
@@ -65,6 +96,11 @@ function createWindow() {
         }
         if (timerManager) {
             timerManager.pauseTimer();
+        }
+        if (timerManager.websocketServer && timerManager.websocketServer.wss) {
+            timerManager.websocketServer.wss.close(() => {
+                console.log('WebSocket server closed');
+            });
         }
         mainWindow = null;
     });
@@ -231,26 +267,36 @@ ipcMain.handle('twitch-get-user', () => {
 
 // IPC Handler for updating timer settings
 ipcMain.on('update-timer-settings', (event, settings) => {
-    // Validate and update settings
-    timerSettings = {
-        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 1,
-        tier1SubTime: parseFloat(settings.tier1SubTime) || 5,
-        tier2SubTime: parseFloat(settings.tier2SubTime) || 10,
-        tier3SubTime: parseFloat(settings.tier3SubTime) || 15
-    };
+    // Save settings to local storage
+    const settingsPath = path.join(app.getPath('userData'), 'timer_settings.json');
     
-    // Optional: Persist settings to a file or database
-    try {
-        const settingsPath = path.join(app.getPath('userData'), 'timer_settings.json');
-        fs.writeFileSync(settingsPath, JSON.stringify(timerSettings), 'utf-8');
-    } catch (error) {
-        console.error('Error saving timer settings:', error);
+    // Update timer settings
+    timerSettings = {
+        ...timerSettings,
+        ...settings
+    };
+    fs.writeFileSync(settingsPath, JSON.stringify(timerSettings), 'utf-8');
+
+    themeSettings = {
+        ...themeSettings,
+        ...settings
+    };
+
+    // Update theme if theme-related settings are present
+    if (timerManager.wsServer) {
+        console.log('Updating theme settings');
+        timerManager.wsServer.updateTheme(themeSettings);
     }
 });
 
 // IPC Handler to get current timer settings
 ipcMain.handle('get-timer-settings', () => {
     return timerSettings;
+});
+
+// IPC Handler to get overlay path
+ipcMain.handle('get-overlay-path', () => {
+    return overlayPath;
 });
 
 // Load saved settings on app startup
