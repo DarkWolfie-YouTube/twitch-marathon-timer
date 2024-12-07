@@ -7,7 +7,8 @@
     "test": "electron .",
     "pack": "electron-builder --dir",
     "build": "electron-builder --win --publish never",
-    "release": "electron-builder --win --publish always"
+    "build:mac": "electron-builder --mac --publish never",
+    "release": "electron-builder --win --mac --publish always"
   },
   "repository": {
     "type": "git",
@@ -65,6 +66,37 @@
         }
       ],
       "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.utilities",
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "icon": "build/icon.icns",
+      "iconSize": 128,
+      "contents": [
+        {
+          "x": 380,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 180,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "nsis": {
       "oneClick": false,
