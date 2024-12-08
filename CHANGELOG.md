@@ -4,11 +4,10 @@ This release is signed (for windows) and not verified. If the code signing is in
 
 # Changes!
 
-- Updated to v0.7.0
+- fixed stating that the lower beta version is the latest
+- fixed the update checker to work properly
 
-- added support to check for updates on startup
-- Fixed github actions builds
-- Fixed a bug with the statusDiv not existing in the websocket-client
+
 
 
 ## ‼️ IMPORTNAT !! 

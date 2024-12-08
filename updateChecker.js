@@ -101,6 +101,13 @@ async function checkForUpdates(window, silent = false) {
 }
 
 function compareVersions(current, latest) {
+    // Betas have "-BETA-PreR*" at the end
+    // check the beta PreR number if the beta tag is present
+    if (current.includes('-BETA-PreR')) {
+        const currentBetaPreR = current.split('-BETA-PreR')[1];
+        const latestBetaPreR = latest.split('-BETA-PreR')[1];
+        return compareVersions(currentBetaPreR, latestBetaPreR);
+    }
     const currentParts = current.split('.').map(Number);
     const latestParts = latest.split('.').map(Number);
 
