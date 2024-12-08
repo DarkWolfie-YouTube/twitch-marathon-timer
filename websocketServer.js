@@ -128,6 +128,7 @@ class WebSocketServer {
     }
 
     updateTheme(settings) {
+        console.log('Updating theme settings:', settings);
         // Directly use the settings object from the UI
         this.themeSettings = {
             background: settings.overlayBackground || '#1f1f1f',

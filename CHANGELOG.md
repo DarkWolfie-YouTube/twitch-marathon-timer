@@ -4,9 +4,14 @@ This release is signed (for windows) and not verified. If the code signing is in
 
 # Changes!
 
-- Updated to v0.6.0
-- Added A HTML file for OBS as an overlay.
-- Added a Copy button to copy the OBS overlay URL to the clipboard.
-- Fixed a bug where the timer theme was not being updated via the websocket.
-- Fixed a bug where the theme settings were not being saved to file.
+- Updated to v0.7.0
+
+- added support to check for updates on startup
+- Fixed github actions builds
+- Fixed a bug with the statusDiv not existing in the websocket-client
+
+
+## ‼️ IMPORTNAT !! 
+
+Once v1.0.0 is released, the mock websocket server will be removed and the real one will be used. At this time, Twitch EventSub is not used.
 

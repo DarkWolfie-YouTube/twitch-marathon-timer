@@ -61,10 +61,6 @@
         const maxReconnectAttempts = 10;
         const baseDelay = 1000; // Start with 1 second delay
 
-        function updateStatus(message, isError = false) {
-            statusDiv.textContent = message;
-            statusDiv.style.color = isError ? '#ff4444' : '#666';
-        }
 
         function formatTime(seconds) {
             const days = Math.floor(seconds / 86400);
@@ -80,7 +76,7 @@
         }
 
         function applyTheme(settings) {
-            container.backgroundColor = settings.background;
+            container.style.backgroundColor = settings.background;
             timerDiv.style.color = settings.text;
             timerDiv.style.fontFamily = settings.font;
             timerDiv.style.fontSize = settings.fontSize;
@@ -92,11 +88,9 @@
                 return; // Already connected or connecting
             }
 
-            updateStatus('Connecting...');
             socket = new WebSocket('ws://localhost:42069');
 
             socket.addEventListener('open', () => {
-                updateStatus('Connected');
                 reconnectAttempts = 0; // Reset reconnection attempts on successful connection
                 // Request theme settings when connection is established
                 socket.send(JSON.stringify({ type: 'getTheme' }));
@@ -122,19 +116,15 @@
                 if (reconnectAttempts < maxReconnectAttempts) {
                     const delay = Math.min(baseDelay * Math.pow(2, reconnectAttempts), 30000); // Cap at 30 seconds
                     const nextAttempt = Math.round(delay/1000);
-                    updateStatus(`Reconnecting in ${nextAttempt}s...`, true);
                     setTimeout(() => {
                         reconnectAttempts++;
                         connectWebSocket();
                     }, delay);
-                } else {
-                    updateStatus('Connection failed', true);
                 }
             });
 
             socket.addEventListener('error', (error) => {
                 console.error('WebSocket error:', error);
-                updateStatus('Connection error', true);
             });
         }
 

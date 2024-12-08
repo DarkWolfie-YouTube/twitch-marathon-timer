@@ -48,5 +48,9 @@ contextBridge.exposeInMainWorld('api', {
         ipcRenderer.on('timer-update', (_, data) => callback(data));
     },
     // Overlay Path
-    getOverlayPath: () => ipcRenderer.invoke('get-overlay-path')
+    getOverlayPath: () => ipcRenderer.invoke('get-overlay-path'),
+    // Update checker
+    checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+    getUpdateSettings: () => ipcRenderer.invoke('get-update-settings'),
+    setPreReleaseCheck: (enabled) => ipcRenderer.invoke('set-pre-release-check', enabled)
 });

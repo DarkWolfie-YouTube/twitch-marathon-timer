@@ -5,6 +5,7 @@ const EventSubClient = require('./eventSubClient');
 const AuthManager = require('./authManager');
 const fs = require('fs');
 const TimerManager = require('./timerManager');
+const { checkForUpdates } = require('./updateChecker');
 
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
@@ -43,6 +44,11 @@ function ensureOverlayFile() {
     // Create overlay directory if it doesn't exist
     if (!fs.existsSync(overlayDir)) {
         fs.mkdirSync(overlayDir, { recursive: true });
+    }
+
+    // Delete overlay file if it already exists
+    if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
     }
 
     // Copy overlay file if it doesn't exist or if we're in development
@@ -87,6 +93,9 @@ function createWindow() {
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
 
+    // Check for updates when the app starts (silently)
+    checkForUpdates(mainWindow, false);
+
     // Check for existing valid token
     checkStoredToken();
 
@@ -97,8 +106,8 @@ function createWindow() {
         if (timerManager) {
             timerManager.pauseTimer();
         }
-        if (timerManager.websocketServer && timerManager.websocketServer.wss) {
-            timerManager.websocketServer.wss.close(() => {
+        if (timerManager.wsServer && timerManager.wsServer.wss) {
+            timerManager.wsServer.wss.close(() => {
                 console.log('WebSocket server closed');
             });
         }
@@ -269,11 +278,14 @@ ipcMain.handle('twitch-get-user', () => {
 ipcMain.on('update-timer-settings', (event, settings) => {
     // Save settings to local storage
     const settingsPath = path.join(app.getPath('userData'), 'timer_settings.json');
+
     
     // Update timer settings
     timerSettings = {
-        ...timerSettings,
-        ...settings
+        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 1,
+        tier1SubTime: parseFloat(settings.tier1SubTime) || 5,
+        tier2SubTime: parseFloat(settings.tier2SubTime) || 10,
+        tier3SubTime: parseFloat(settings.tier3SubTime) || 15
     };
     fs.writeFileSync(settingsPath, JSON.stringify(timerSettings), 'utf-8');
 
@@ -297,6 +309,21 @@ ipcMain.handle('get-timer-settings', () => {
 // IPC Handler to get overlay path
 ipcMain.handle('get-overlay-path', () => {
     return overlayPath;
+});
+
+// Add update checker IPC handler
+ipcMain.handle('check-for-updates', () => {
+    checkForUpdates(mainWindow, false);
+});
+
+ipcMain.handle('get-update-settings', () => {
+    const { getSettings } = require('./updateChecker');
+    return getSettings();
+});
+
+ipcMain.handle('set-pre-release-check', (event, enabled) => {
+    const { setPreReleaseCheck } = require('./updateChecker');
+    setPreReleaseCheck(enabled);
 });
 
 // Load saved settings on app startup

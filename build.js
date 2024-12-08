@@ -32,10 +32,12 @@ const config = {
         icon: 'build/icon.ico',
         // Only include certificate settings if CERT_PASSWORD is present
         ...(process.env.CERT_PASSWORD && {
-            certificateFile: './build/cert.pfx',
-            certificatePassword: process.env.CERT_PASSWORD,
-            publisherName: 'DarkWolfieVT',
-            signingHashAlgorithms: ['sha256']
+            signtoolOptions: {
+                certificateFile: './build/cert.pfx',
+                certificatePassword: process.env.CERT_PASSWORD,
+                publisherName: 'DarkWolfieVT',
+                signingHashAlgorithms: ['sha256']
+            }
         })
     },
     nsis: {
