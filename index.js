@@ -81,7 +81,8 @@ function createWindow() {
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
         titleBarOverlay: false,
-        resizable: false
+        resizable: false,
+        icon: path.join(__dirname, 'build/icon.ico')
     });
 
     mainWindow.loadFile(path.join(__dirname, 'views/index.html'));

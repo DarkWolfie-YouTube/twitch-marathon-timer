@@ -33,7 +33,7 @@ const config = {
         // Only include certificate settings if CERT_PASSWORD is present
         ...(process.env.CERT_PASSWORD && {
             signtoolOptions: {
-                certificateFile: './build/cert.pfx',
+                certificateFile: 'F:/Twitch Marathon Timer/build/cert.pfx',
                 certificatePassword: process.env.CERT_PASSWORD,
                 publisherName: 'DarkWolfieVT',
                 signingHashAlgorithms: ['sha256']
