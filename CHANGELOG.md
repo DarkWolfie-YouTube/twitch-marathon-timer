@@ -6,7 +6,8 @@ This release is signed (for windows) and not verified. If the code signing is in
 
 - fixed stating that the lower beta version is the latest
 - fixed the update checker to work properly
-
+- Version 0.8.0-BETA-PreR2
+- Fixed where the build doesn't use the right node js version when self building for windows.
 
 
 
