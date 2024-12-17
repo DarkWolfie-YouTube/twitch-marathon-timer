@@ -35,7 +35,9 @@ let themeSettings = {
     overlayFont: 'Courier New',
     overlayFontSize: 48
 };
+const fontList = require('font-list')
 
+    
 function ensureOverlayFile() {
     const userDataPath = app.getPath('userData');
     const overlayDir = path.join(userDataPath, 'overlay');
@@ -93,6 +95,7 @@ function createWindow() {
     timerManager = new TimerManager();
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
+    
 
     // Check for updates when the app starts (silently)
     checkForUpdates(mainWindow, false);
@@ -195,6 +198,21 @@ async function checkStoredToken() {
             twitchAccessToken = storedToken.access_token;
             twitchUser = storedToken;
             mainWindow.webContents.send('twitch-auth-success', twitchUser);
+            fontList.getFonts()
+            .then(fonts => {
+                // Process the fonts to remove quotes
+                const formattedFonts = fonts.map(font => {
+                    // Remove quotes from the font name
+                    return font.replace(/"/g, '');
+                });
+        
+                // Send the formatted font list to the renderer process
+                mainWindow.webContents.send('font-list', formattedFonts);
+                console.log(formattedFonts);
+            })
+            .catch(err => {
+                console.log(err);
+            });
 
             
             // Initialize EventSub client after successful token validation
@@ -202,6 +220,7 @@ async function checkStoredToken() {
                 eventSubClient = new EventSubClient();
                 eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
                 eventSubClient.connect(mainWindow);
+
             }
         }
     } catch (error) {

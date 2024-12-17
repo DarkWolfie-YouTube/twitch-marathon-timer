@@ -52,5 +52,6 @@ contextBridge.exposeInMainWorld('api', {
     // Update checker
     checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
     getUpdateSettings: () => ipcRenderer.invoke('get-update-settings'),
-    setPreReleaseCheck: (enabled) => ipcRenderer.invoke('set-pre-release-check', enabled)
+    setPreReleaseCheck: (enabled) => ipcRenderer.invoke('set-pre-release-check', enabled),
+    getFonts: (callback) => ipcRenderer.on('font-list', (_, data) => callback(data))
 });

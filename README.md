@@ -35,7 +35,7 @@ A desktop application that creates an interactive stream timer that automaticall
 
 ## Installation
 
-1. Download the latest release for your platform:
+1. Download the latest [release](https://github.com/DarkWolfie-YouTube/twitch-marathon-timer/releases) for your platform:
    - Windows: `.exe` installer
    - macOS: `.dmg` installer (NOT AVAIABLE YET)
 

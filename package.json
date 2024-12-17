@@ -1,6 +1,6 @@
 {
   "name": "twitch-marathon-timer",
-  "version": "0.8.0-BETA-PreR2",
+  "version": "0.9.0-BETA-PreR1",
   "description": "A Twitch Timer that reacts to certain eventsub events to add time to a timer based on configured settings.",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "pack": "electron-builder --dir",
     "dist": "node build.js",
     "build": "electron-builder --win --publish never",
-    "build:mac": "electron-builder --mac --publish never",
+    "build:mac": "electron-builder --mac --publish never --universal",
     "release": "electron-builder --win --mac --publish always"
   },
   "repository": {
@@ -32,6 +32,7 @@
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "dotenv": "^16.4.7",
+    "font-list": "^1.5.1",
     "node-fetch": "^3.3.2",
     "ws": "^8.18.0"
   },
@@ -63,13 +64,17 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "build/icon.icns",
       "category": "public.app-category.utilities",
       "darkModeSupport": true,

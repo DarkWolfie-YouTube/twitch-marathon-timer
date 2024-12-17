@@ -487,11 +487,6 @@
                                     <div class="col">
                                         <label for="overlayFont">Font Family</label>
                                         <select class="form-select bg-secondary text-white" id="overlayFont">
-                                            <option value="Courier New">Courier New</option>
-                                            <option value="Arial">Arial</option>
-                                            <option value="Helvetica">Helvetica</option>
-                                            <option value="Times New Roman">Times New Roman</option>
-                                            <option value="Verdana">Verdana</option>
                                         </select>
                                     </div>
                                     <div class="col">
@@ -798,6 +793,17 @@
             window.api.addTimerTime(data.timeToAdd);
             addEventToLog(data);
         });
+        const overlayFontSelect = document.getElementById('overlayFont');
+
+        window.api.getFonts((fonts) => {
+            
+            fonts.forEach(element => {
+                const option = document.createElement('option');
+                option.value = element;
+                option.textContent = element;
+                overlayFontSelect.appendChild(option);
+            });
+        });
 
         // Initialize overlay path
         const overlayPathInput = document.getElementById('overlayPath');
@@ -838,6 +844,8 @@
         preReleaseCheckbox.addEventListener('change', async (e) => {
             await window.api.setPreReleaseCheck(e.target.checked);
         });
+
+        
     </script>
 </body>
 </html>
