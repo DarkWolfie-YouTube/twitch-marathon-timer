@@ -284,6 +284,8 @@ ipcMain.handle('twitch-get-user', () => {
     return twitchUser;
 });
 
+//Testing Line
+
 // IPC Handler for updating timer settings
 ipcMain.on('update-timer-settings', (event, settings) => {
     // Save settings to local storage
