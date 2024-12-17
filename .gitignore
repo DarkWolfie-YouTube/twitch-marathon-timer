@@ -134,3 +134,5 @@ dist
 # Added Files.
 build/cert.pfx
 build/cert.cer
+# The Testing Subscription remover (has my token lol)
+test.js

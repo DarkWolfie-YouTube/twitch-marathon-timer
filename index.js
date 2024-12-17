@@ -175,6 +175,7 @@ async function handleAuthCallback(event, url) {
             await authManager.saveToken(tokenData);
             if (!eventSubClient) {
                 eventSubClient = new EventSubClient();
+                eventSubClient.updateToken(token, twitchUser.id);
                 eventSubClient.connect(mainWindow);
             }
         } catch (error) {
@@ -194,10 +195,12 @@ async function checkStoredToken() {
             twitchAccessToken = storedToken.access_token;
             twitchUser = storedToken;
             mainWindow.webContents.send('twitch-auth-success', twitchUser);
+
             
             // Initialize EventSub client after successful token validation
             if (!eventSubClient) {
                 eventSubClient = new EventSubClient();
+                eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
                 eventSubClient.connect(mainWindow);
             }
         }
@@ -263,8 +266,14 @@ ipcMain.handle('window-minimize', () => {
     if (mainWindow) mainWindow.minimize();
 });
 
-ipcMain.handle('window-close', () => {
-    if (mainWindow) mainWindow.close();
+ipcMain.handle('window-close', async () => {
+    if (mainWindow) {
+        if (eventSubClient) {
+           await eventSubClient.disconnect();
+        }
+        await mainWindow.close();
+    
+    }
 });
 
 ipcMain.handle('twitch-login', () => {

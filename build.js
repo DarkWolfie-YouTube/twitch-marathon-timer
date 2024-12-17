@@ -5,7 +5,7 @@ const os = require('os');
 
 // Configuration for the build
 const config = {
-    appId: 'com.darkwolfievt.twitchmarathontimer',
+    appId: 'com.darkwolfie.twitchmarathontimer',
     productName: 'Twitch Marathon Timer',
     directories: {
         output: 'dist'
@@ -33,7 +33,7 @@ const config = {
         // Only include certificate settings if CERT_PASSWORD is present
         ...(process.env.CERT_PASSWORD && {
             signtoolOptions: {
-                certificateFile: 'F:/Twitch Marathon Timer/build/cert.pfx',
+                certificateFile: 'C:/Users/DarkWolfie/Desktop/backup/Twitch Marathon Timer/build/cert.pfx',
                 certificatePassword: process.env.CERT_PASSWORD,
                 publisherName: 'DarkWolfieVT',
                 signingHashAlgorithms: ['sha256']

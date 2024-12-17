@@ -6,6 +6,7 @@ const path = require('path');
 const { app } = require('electron');
 
 const userDataPath = app.getPath('userData');
+const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
 
 
 class EventSubClient {
@@ -19,7 +20,8 @@ class EventSubClient {
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
         this.closedByUser = false;
-
+        this.accessToken = null;
+        this.broadcasterId = null;    
         // Default timer settings
         this.timerSettings = JSON.parse(fs.readFileSync(path.join(userDataPath, 'timer_settings.json'), 'utf-8'));
     }
@@ -27,7 +29,7 @@ class EventSubClient {
     async connect(mainWindow) {
         try {
             this.mainWindow = mainWindow;
-            this.ws = new WebSocket('ws://localhost:8080/ws');
+            this.ws = new WebSocket('wss://eventsub.wss.twitch.tv/ws');
 
 
             this.ws.on('open', () => {
@@ -126,10 +128,10 @@ class EventSubClient {
 
         for (const subscription of subscriptionTypes) {
             try {
-                const response = await fetch('http://localhost:8080/eventsub/subscriptions', {
+                const response = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
                     method: 'POST',
                     headers: {
-                        'Client-ID': process.env.TWITCH_CLIENT_ID,
+                        'Client-ID': TWITCH_CLIENT_ID,
                         'Authorization': `Bearer ${this.accessToken}`,
                         'Content-Type': 'application/json'
                     },
@@ -298,11 +300,41 @@ class EventSubClient {
         };
     }
 
-    disconnect() {
+    async disconnect() {
         if (this.ws) {
             this.closedByUser = true;
-            this.ws.close();
+            await this.removeSubscriptions();
+            await this.ws.close();
         }
+    }
+
+    updateToken(token, id){
+        this.accessToken = token;
+        this.broadcasterId = id;
+    }
+
+    async removeSubscriptions() {
+        if (this.sessionId) {
+            return new Promise(async (resolve, reject) => {
+            for (const subscriptionId of this.subscriptions) {
+                const statusa = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${subscriptionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Client-ID': TWITCH_CLIENT_ID,
+                        'Authorization': `Bearer ${this.accessToken}`
+                    }
+                });
+                if (statusa.status === 204) {
+                    this.subscriptions.delete(subscriptionId);
+                    console.log(`Removed subscription ${subscriptionId}`);
+                } else {
+                    console.error(`Failed to remove subscription ${subscriptionId}`);
+                }
+            }
+
+            resolve();  
+        })
+     }
     }
 }
 
