@@ -46,10 +46,6 @@ const config = {
         createDesktopShortcut: true,
         createStartMenuShortcut: true,
         shortcutName: "Twitch Marathon Timer"
-    },
-    publish: {
-        provider: 'github',
-        releaseType: 'draft'
     }
 };
 

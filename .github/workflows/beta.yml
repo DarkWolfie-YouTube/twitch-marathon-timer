@@ -83,6 +83,7 @@ jobs:
           name: Twitch Marathon Timer ${{ github.ref_name }}
           files: |
             ./artifacts/windows-artifact/*.exe
+            ./artifacts/macos-artifact/*.dmg
           body_path: ./CHANGELOG.md
           prerelease: true
 

@@ -9,13 +9,14 @@ This release is signed (for windows) and not verified. If the code signing is in
 
 # Changes!
 
-- Version 0.9.0-BETA-PreR1
-- Implemented system font detection and updated the code to display these fonts for choosing as the theme for the overlay.
-- Moved to the official twitch API and eventsub websocket server. 
-- Mac Builds still run for now but may be removed in the future due to it not working on actual MacOS Physical Machienes.
+- Version 0.9.1-BETA-PreR1
+- On the build script, removed the publish option, I don't need a draft build made by electron-builder.
+- Added a Logger and made most logging messages to use it. Debug Information will not be displayed here.
+- Readded the MacOS Beta Builds for testing Purposes.
+
+
 
 
 ## ‼️ IMPORTNAT !! 
-
-Once v1.0.0 is released, the mock websocket server will be removed and the real one will be used. At this time, Twitch EventSub is not used.
+The real twitch event websocket is used during this time as it is close for public release.
 

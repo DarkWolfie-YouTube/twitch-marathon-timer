@@ -6,6 +6,7 @@ const AuthManager = require('./authManager');
 const fs = require('fs');
 const TimerManager = require('./timerManager');
 const { checkForUpdates } = require('./updateChecker');
+const Logger = require('./logger');
 
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
@@ -20,6 +21,7 @@ let eventSubClient = null;
 let authManager = null;
 let timerManager = null;
 let overlayPath = null;
+let logger = null;
 
 // Timer Settings Management
 let timerSettings = {
@@ -95,6 +97,14 @@ function createWindow() {
     timerManager = new TimerManager();
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
+
+
+    if (logger){
+        logger.info('App started');
+    } else {
+        logger = new Logger();
+        logger.info('App started');
+    }
     
 
     // Check for updates when the app starts (silently)
