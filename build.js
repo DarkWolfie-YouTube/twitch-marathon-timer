@@ -28,6 +28,10 @@ const config = {
         target: [{
             target: 'nsis',
             arch: ['x64']
+        },
+        {
+            target: "msi",
+            arch: ["x64"]
         }],
         icon: 'build/icon.ico',
         // Only include certificate settings if CERT_PASSWORD is present
@@ -53,15 +57,12 @@ async function build() {
     console.log('Starting build process...');
     
     try {
-        // Check if running in GitHub Actions
-        const isGithubAction = process.env.GITHUB_ACTIONS === 'true';
         
         // If in GitHub Actions, always build for Windows
         // If not, build for current platform
         const buildConfig = {
             targets: Platform.WINDOWS.createTarget(),
             config: config,
-            publish: isGithubAction ? 'always' : 'never'
         };
 
         await builder.build(buildConfig);

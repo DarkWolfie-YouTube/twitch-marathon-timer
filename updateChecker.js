@@ -31,9 +31,10 @@ function saveSettings() {
     }
 }
 
-async function checkForUpdates(window, silent = false) {
+async function checkForUpdates(window, silent = false, logger) {
     try {
         // Load current settings
+        logger.info('Checking for updates...');
         loadSettings();
 
         // Determine which endpoint to use based on settings
@@ -57,6 +58,7 @@ async function checkForUpdates(window, silent = false) {
                     message: 'Unable to check for updates at this time.',
                     buttons: ['OK']
                 });
+                logger.warn("Unable to check for updates at this time.");
             }
             return;
         }
@@ -75,6 +77,8 @@ async function checkForUpdates(window, silent = false) {
                 defaultId: 0
             });
 
+            logger.info(`Update available: ${latestVersion}`);
+
             if (choice.response === 0) {
                 require('electron').shell.openExternal(latestRelease.html_url);
             }
@@ -85,6 +89,9 @@ async function checkForUpdates(window, silent = false) {
                 message: `You're running the latest version (${currentVersion}).`,
                 buttons: ['OK']
             });
+            logger.info(`No updates available: ${currentVersion}`);
+        } else {
+            logger.info(`No updates available: ${currentVersion}`);
         }
     } catch (error) {
         console.error('Update check failed:', error);

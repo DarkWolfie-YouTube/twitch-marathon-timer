@@ -78,7 +78,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            devTools: !app.isPackaged
         }, 
         frame: false,
         title: "Twitch Marathon Timer",
@@ -90,25 +91,26 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'views/index.html'));
+    if (logger){
+        logger.info('App started! Twitch Martahon Timer is now online!');
+    } else {
+        logger = new Logger();
+        logger.info('App started! Twitch Martahon Timer is now online!');
+    }
 
     // Initialize AuthManager with user data path
     const userDataPath = app.getPath('userData');
-    authManager = new AuthManager(userDataPath);
-    timerManager = new TimerManager();
+    authManager = new AuthManager(userDataPath, logger, mainWindow);
+    timerManager = new TimerManager(logger);
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
 
 
-    if (logger){
-        logger.info('App started');
-    } else {
-        logger = new Logger();
-        logger.info('App started');
-    }
+    
     
 
     // Check for updates when the app starts (silently)
-    checkForUpdates(mainWindow, false);
+    checkForUpdates(mainWindow, false, logger);
 
     // Check for existing valid token
     checkStoredToken();
@@ -122,7 +124,7 @@ function createWindow() {
         }
         if (timerManager.wsServer && timerManager.wsServer.wss) {
             timerManager.wsServer.wss.close(() => {
-                console.log('WebSocket server closed');
+                logger.info('WebSocket server closed');
             });
         }
         mainWindow = null;
@@ -157,7 +159,7 @@ function createAuthWindow() {
 }
 
 async function handleAuthCallback(event, url) {
-    console.log('Navigated to:', url);
+    logger.info('Navigated to:', url);
     if (url.includes('#access_token=')) {
         const token = url.split('#access_token=')[1].split('&')[0];
         twitchAccessToken = token;
@@ -173,7 +175,6 @@ async function handleAuthCallback(event, url) {
             const data = await response.json();
             twitchUser = data.data[0];
             mainWindow.webContents.send('twitch-auth-success', twitchUser);
-            console.log('User data:', twitchUser);  
 
             // Save token to file
             const tokenData = {
@@ -187,12 +188,12 @@ async function handleAuthCallback(event, url) {
             };
             await authManager.saveToken(tokenData);
             if (!eventSubClient) {
-                eventSubClient = new EventSubClient();
+                eventSubClient = new EventSubClient(logger);
                 eventSubClient.updateToken(token, twitchUser.id);
                 eventSubClient.connect(mainWindow);
             }
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            logger.error('Error fetching user data:', error);
         }
 
         if (authWindow) {
@@ -218,23 +219,22 @@ async function checkStoredToken() {
         
                 // Send the formatted font list to the renderer process
                 mainWindow.webContents.send('font-list', formattedFonts);
-                console.log(formattedFonts);
             })
             .catch(err => {
-                console.log(err);
+                logger.error(err);
             });
 
             
             // Initialize EventSub client after successful token validation
             if (!eventSubClient) {
-                eventSubClient = new EventSubClient();
+                eventSubClient = new EventSubClient(logger);
                 eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
                 eventSubClient.connect(mainWindow);
 
             }
         }
     } catch (error) {
-        console.error('Error checking stored token:', error);
+        logger.error('Error checking stored token:', error);
         mainWindow.webContents.send('twitch-auth-error', { message: 'Failed to validate token' });
     }
 }
@@ -253,7 +253,7 @@ ipcMain.handle('save-twitch-token', async (event, tokenData) => {
             
             // Initialize EventSub client after new token
             if (!eventSubClient) {
-                eventSubClient = new EventSubClient();
+                eventSubClient = new EventSubClient(logger);
                 eventSubClient.connect(mainWindow);
             }
             return { success: true };
@@ -261,7 +261,7 @@ ipcMain.handle('save-twitch-token', async (event, tokenData) => {
             return { success: false, error: 'Failed to save token' };
         }
     } catch (error) {
-        console.error('Error saving token:', error);
+        logger.error('Error saving token:', error);
         return { success: false, error: error.message };
     }
 });
@@ -278,7 +278,7 @@ ipcMain.handle('twitch-logout', async () => {
         mainWindow.webContents.send('twitch-auth-logout');
         return { success: true };
     } catch (error) {
-        console.error('Error during logout:', error);
+        logger.error('Error during logout:', error);
         return { success: false, error: error.message };
     }
 });
@@ -337,7 +337,7 @@ ipcMain.on('update-timer-settings', (event, settings) => {
 
     // Update theme if theme-related settings are present
     if (timerManager.wsServer) {
-        console.log('Updating theme settings');
+        logger.info('Updating theme settings');
         timerManager.wsServer.updateTheme(themeSettings);
     }
 });
@@ -381,7 +381,7 @@ function loadSavedSettings() {
             };
         }
     } catch (error) {
-        console.error('Error loading timer settings:', error);
+        logger.error('Error loading timer settings:', error);
     }
 }
 

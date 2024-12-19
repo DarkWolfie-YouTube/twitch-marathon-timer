@@ -1,30 +1,39 @@
 const fs = require('fs');
 const path = require('path');
-const app = require('electron').app;
+const { app } = require('electron');
 
 class Logger {
     constructor() {
+        // Make sure app is ready before accessing userData path
+        if (!app.isReady()) {
+            throw new Error('Logger must be initialized after app is ready');
+        }
+
         this.logFolderPath = path.join(app.getPath('userData'), 'logs');
-        this.logFilePath = path.join(this.logFolderPath, `log-${new Date().toISOString()}.txt`);
+        this.logFilePath = path.join(this.logFolderPath, `log-${new Date().toISOString().replace(/:/g, '-')}.txt`);
         this.logLevel = 'info';
         
-        // Ensure logs directory exists
-        const logDir = path.dirname(this.logFolderPath);
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
+        this.initializeLogFile();
+    }
+
+    initializeLogFile() {
+        try {
+            // Create logs directory if it doesn't exist
+            if (!fs.existsSync(this.logFolderPath)) {
+                fs.mkdirSync(this.logFolderPath, { recursive: true });
+            }
+    
+            // Create log file if it doesn't exist
+            if (!fs.existsSync(this.logFilePath)) {
+                fs.writeFileSync(this.logFilePath, `Log file created at: ${new Date().toISOString()}\n`);
+            }
+        } catch (error) {
+            console.error('Failed to initialize log file:', error);
+            throw new Error(`Logger initialization failed: ${error.message}`);
         }
     }
 
-    /**
-     * Format the log message with timestamp and level
-     * @param {string} level - Log level (info, error, warn)
-     * @param {string} message - Message to log
-     * @returns {string} Formatted log message
-     */
-    formatLogMessage(level, message) {
-        const timestamp = new Date().toISOString();
-        return `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
-    }
+    
 
     /**
      * Write to log file
@@ -39,32 +48,50 @@ class Logger {
     }
 
     /**
-     * Log info level message
-     * @param {string} message - Message to log
+     * Format the log message with timestamp and level
+     * @param {string} level - Log level (info, error, warn)
+     * @param {...any} args - Arguments to log
+     * @returns {string} Formatted log message
      */
-    info(message) {
-        const formattedMessage = this.formatLogMessage('info', message);
+    formatLogMessage(level, ...args) {
+        const timestamp = new Date().toISOString();
+        const message = args
+            .map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg);
+                }
+                return String(arg);
+            })
+            .join(' ');
+        return `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+    }
+
+    /**
+     * Log info level message
+     * @param {...any} args - Arguments to log
+     */
+    info(...args) {
+        const formattedMessage = this.formatLogMessage('info', ...args);
         this.writeToLog(formattedMessage);
     }
 
     /**
      * Log error level message
-     * @param {string} message - Message to log
+     * @param {...any} args - Arguments to log
      */
-    error(message) {
-        const formattedMessage = this.formatLogMessage('error', message);
+    error(...args) {
+        const formattedMessage = this.formatLogMessage('error', ...args);
         this.writeToLog(formattedMessage);
     }
 
     /**
      * Log warning level message
-     * @param {string} message - Message to log
+     * @param {...any} args - Arguments to log
      */
-    warn(message) {
-        const formattedMessage = this.formatLogMessage('warn', message);
+    warn(...args) {
+        const formattedMessage = this.formatLogMessage('warn', ...args);
         this.writeToLog(formattedMessage);
     }
-
     /**
      * Clear the log file
      */

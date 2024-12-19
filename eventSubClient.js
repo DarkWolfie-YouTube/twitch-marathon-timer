@@ -10,7 +10,8 @@ const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
 
 
 class EventSubClient {
-    constructor() {
+    constructor(Logger) {
+        this.logger = Logger;
         this.ws = null;
         this.isConnected = false;
         this.mainWindow = null;
@@ -33,7 +34,7 @@ class EventSubClient {
 
 
             this.ws.on('open', () => {
-                console.log('Connected to mock EventSub WebSocket server');
+                this.logger.info('Connected to EventSub WebSocket server');
                 this.isConnected = true;
                 this.reconnectAttempts = 0;
             });
@@ -43,12 +44,12 @@ class EventSubClient {
                     const message = JSON.parse(data);
                     this.handleMessage(message);
                 } catch (error) {
-                    console.error('Error parsing WebSocket message:', error);
+                    this.logger.error('Error parsing WebSocket message:', error);
                 }
             });
 
             this.ws.on('close', () => {
-                console.log('Disconnected from mock EventSub WebSocket server');
+                this.logger.info('Disconnected from EventSub WebSocket server');
                 this.isConnected = false;
                 if (!this.closedByUser) {
                     this.attemptReconnect();
@@ -56,12 +57,12 @@ class EventSubClient {
             });
 
             this.ws.on('error', (error) => {
-                console.error('WebSocket error:', error);
+                this.logger.error('WebSocket error:', error);
                 this.isConnected = false;
             });
 
         } catch (error) {
-            console.error('Error connecting to EventSub:', error);
+            this.logger.error('Error connecting to EventSub:', error);
             this.isConnected = false;
         }
     }
@@ -70,7 +71,7 @@ class EventSubClient {
         switch (message.metadata.message_type) {
             case 'session_welcome':
                 this.sessionId = message.payload.session.id;
-                console.log('Session established:', this.sessionId);
+                this.logger.info('Session established:', this.sessionId);
                 await this.createSubscriptions();
                 break;
 
@@ -90,7 +91,7 @@ class EventSubClient {
                 break;
 
             case 'revocation':
-                console.log('Subscription revoked:', message.payload);
+                this.logger.info('Subscription revoked:', message.payload);
                 this.subscriptions.delete(message.payload.subscription.id);
                 break;
         }
@@ -98,7 +99,7 @@ class EventSubClient {
 
     async createSubscriptions() {
         if (!this.sessionId) {
-            console.error('No session ID available for creating subscriptions');
+            this.logger.error('No session ID available for creating subscriptions');
             return;
         }
 
@@ -148,16 +149,16 @@ class EventSubClient {
 
                 if (!response.ok) {
                     const error = await response.json();
-                    console.error(`Failed to create subscription for ${subscription.type}:`, error);
+                    this.logger.error(`Failed to create subscription for ${subscription.type}:`, error);
                     continue;
                 }
 
                 const data = await response.json();
                 this.subscriptions.add(data.data[0].id);
-                console.log(`Successfully subscribed to ${subscription.type}`);
+               //  this.logger.info(`Successfully subscribed to ${subscription.type}`);
 
             } catch (error) {
-                console.error(`Error creating subscription for ${subscription.type}:`, error);
+                this.logger.error(`Error creating subscription for ${subscription.type}:`, error);
             }
         }
     }
@@ -249,7 +250,7 @@ class EventSubClient {
 
     setupWebSocketHandlers() {
         this.ws.on('open', () => {
-            console.log('Reconnected to Twitch EventSub WebSocket');
+            this.logger.info('Reconnected to Twitch EventSub WebSocket');
             this.isConnected = true;
             this.reconnectAttempts = 0;
         });
@@ -259,12 +260,12 @@ class EventSubClient {
                 const message = JSON.parse(data);
                 this.handleMessage(message);
             } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
+                this.logger.error('Error parsing WebSocket message:', error);
             }
         });
 
         this.ws.on('close', () => {
-            console.log('Disconnected from Twitch EventSub WebSocket');
+            this.logger.info('Disconnected from Twitch EventSub WebSocket');
             this.isConnected = false;
             if (!this.closedByUser) {
                 this.attemptReconnect();
@@ -272,21 +273,21 @@ class EventSubClient {
         });
 
         this.ws.on('error', (error) => {
-            console.error('WebSocket error:', error);
+            this.logger.error('WebSocket error:', error);
             this.isConnected = false;
         });
     }
 
     async attemptReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error('Max reconnection attempts reached');
+            this.logger.error('Max reconnection attempts reached');
             return;
         }
 
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
         
-        console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+        this.logger.info(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
         
         setTimeout(() => {
             this.connect(this.mainWindow);
@@ -326,9 +327,9 @@ class EventSubClient {
                 });
                 if (statusa.status === 204) {
                     this.subscriptions.delete(subscriptionId);
-                    console.log(`Removed subscription ${subscriptionId}`);
+                    this.logger.info(`Removed subscription ${subscriptionId}`);
                 } else {
-                    console.error(`Failed to remove subscription ${subscriptionId}`);
+                    this.logger.error(`Failed to remove subscription ${subscriptionId}`);
                 }
             }
 

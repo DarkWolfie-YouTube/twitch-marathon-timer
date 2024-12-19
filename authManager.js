@@ -1,13 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { profile } = require('console');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { app, dialog } = require('electron');
 
 class AuthManager {
-    constructor(userDataPath) {
+    constructor(userDataPath, logger, window) {
         // Use the provided user data path instead of app.getPath
         this.tokenFilePath = path.join(userDataPath, 'twitch_auth.json');
+        this.logger = logger;
+        this.window = window;
     }
 
     // Encrypt sensitive data
@@ -53,7 +55,6 @@ class AuthManager {
 
             if (response.status === 200) {
                 const data = await response.json();
-                console.log(data)
                 return {
                     valid: true,
                     data: data
@@ -65,7 +66,7 @@ class AuthManager {
                 };
             }
         } catch (error) {
-            console.error('Token validation error:', error);
+            this.logger.error('Token validation error:', error);
             return {
                 valid: false,
                 error: error.message
@@ -79,7 +80,8 @@ class AuthManager {
             // Validate the token first
             const validationResult = await this.validateToken(tokenData.access_token);
             if (!validationResult.valid) {
-                console.log('Token is invalid:', validationResult.error);
+                this.logger.warn('Token is invalid:', validationResult.error);
+                dialog.showErrorBox('Error', 'Token has invalid! This can be due to no internet or the token is not valid.');
                 return false;
             }
 
@@ -114,7 +116,7 @@ class AuthManager {
             
             return true;
         } catch (error) {
-            console.error('Error saving token:', error);
+            this.logger.error('Error saving token:', error);
             return false;
         }
     }
@@ -132,7 +134,9 @@ class AuthManager {
 
             // Check if token has expired
             if (tokenData.expiresAt < Date.now()) {
-                console.log('Token has expired');
+                this.logger.warn('Token has expired! Please re-authenticate.');
+                // make a popup stating that the user is not authenticated
+                dialog.showErrorBox('Error', 'Token has expired! Please re-authenticate.');
                 this.clearToken();
                 return null;
             }
@@ -147,7 +151,7 @@ class AuthManager {
             // Validate the token
             const validationResult = await this.validateToken(accessToken);
             if (!validationResult.valid) {
-                console.log('Stored token is invalid:', validationResult.error);
+                this.logger.warn('Stored token is invalid:', validationResult.error);
                 this.clearToken();
                 return null;
             }
@@ -163,7 +167,7 @@ class AuthManager {
                 expiresAt: tokenData.expiresAt
             };
         } catch (error) {
-            console.error('Error retrieving token:', error);
+            this.logger.error('Error retrieving token:', error);
             return null;
         }
     }
@@ -176,7 +180,7 @@ class AuthManager {
             }
             return true;
         } catch (error) {
-            console.error('Error clearing token:', error);
+            this.logger.error('Error clearing token:', error);
             return false;
         }
     }

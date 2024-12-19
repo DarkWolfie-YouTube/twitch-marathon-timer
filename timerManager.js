@@ -4,7 +4,7 @@ const { app } = require('electron');
 const WebSocketServer = require('./websocketServer');
 
 class TimerManager {
-    constructor() {
+    constructor(logger) {
         this.timerState = {
             totalSeconds: 0,
             remainingSeconds: 0,
@@ -13,8 +13,10 @@ class TimerManager {
         };
         this.timerInterval = null;
         this.mainWindow = null;
-        this.wsServer = new WebSocketServer(42069);
+        this.wsServer = new WebSocketServer(42069, logger);
         this.loadTimerState();
+        this.logger = logger;
+
     }
 
     setMainWindow(window) {
@@ -42,7 +44,7 @@ class TimerManager {
                 
             }
         } catch (error) {
-            console.error('Error loading timer state:', error);
+            this.logger.error('Error loading timer state:', error);
         }
     }
 
@@ -52,7 +54,7 @@ class TimerManager {
             this.timerState.lastUpdated = Date.now();
             fs.writeFileSync(timerPath, JSON.stringify(this.timerState), 'utf-8');
         } catch (error) {
-            console.error('Error saving timer state:', error);
+            this.logger.error('Error saving timer state:', error);
         }
     }
 

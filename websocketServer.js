@@ -5,9 +5,10 @@ const { app } = require('electron');
 const net = require('net');
 
 class WebSocketServer {
-    constructor(port) {
+    constructor(port, logger) {
         this.port = port;
         this.wss = null;
+        this.logger = logger;
         this.clients = new Set(); // Initialize clients Set in constructor
         this.lastTimerState = null;
         
@@ -42,8 +43,8 @@ class WebSocketServer {
 
         this.wss.on('connection', (ws) => {
             this.clients.add(ws);
-            console.log('New client connected');
-            console.log(`Total clients connected: ${this.clients.size}`);
+            this.logger.info('New client connected');
+            this.logger.info(`Total clients connected: ${this.clients.size}`);
 
             // Send the current timer state and theme to the new client
             if (this.lastTimerState) {
@@ -54,7 +55,7 @@ class WebSocketServer {
                 try {
                     const data = JSON.parse(message);
                     if (data.type === 'getTheme') {
-                        console.log('Received getTheme message');
+                        this.logger.info('Received getTheme message');
                         ws.send(JSON.stringify({
                             type: 'theme',
                             settings: this.themeSettings
@@ -67,8 +68,8 @@ class WebSocketServer {
 
             ws.on('close', () => {
                 this.clients.delete(ws);
-                console.log('Client disconnected');
-                console.log(`Total clients connected: ${this.clients.size}`);
+                this.logger.info('Client disconnected');
+                this.logger.info(`Total clients connected: ${this.clients.size}`);
             });
 
             ws.on('error', (error) => {
@@ -81,7 +82,7 @@ class WebSocketServer {
             console.error('WebSocket Server Error:', error);
         });
 
-        console.log(`WebSocket server started on port ${this.port}`);
+        this.logger.info(`WebSocket server started on port ${this.port}`);
     }
 
     loadThemeSettings() {
@@ -128,7 +129,7 @@ class WebSocketServer {
     }
 
     updateTheme(settings) {
-        console.log('Updating theme settings:', settings);
+        this.logger.info('Updating theme settings:', settings);
         // Directly use the settings object from the UI
         this.themeSettings = {
             background: settings.overlayBackground || '#1f1f1f',
