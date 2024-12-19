@@ -354,7 +354,7 @@ ipcMain.handle('get-overlay-path', () => {
 
 // Add update checker IPC handler
 ipcMain.handle('check-for-updates', () => {
-    checkForUpdates(mainWindow, false);
+    checkForUpdates(mainWindow, false, logger);
 });
 
 ipcMain.handle('get-update-settings', () => {
