@@ -155,7 +155,7 @@ class EventSubClient {
 
                 const data = await response.json();
                 this.subscriptions.add(data.data[0].id);
-               //  this.logger.info(`Successfully subscribed to ${subscription.type}`);
+                this.logger.info(`Successfully subscribed to ${subscription.type}`);
 
             } catch (error) {
                 this.logger.error(`Error creating subscription for ${subscription.type}:`, error);
