@@ -59,6 +59,9 @@
       "!*.map",
       "!*.md"
     ],
+    "extraResources": [
+      "bin/*"
+    ],
     "win": {
       "target": [
         {
