@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v1.*.*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v1.[0-9]+.[0-9]+' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   build-windows:

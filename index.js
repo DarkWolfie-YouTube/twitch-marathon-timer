@@ -8,6 +8,10 @@ const TimerManager = require('./timerManager');
 const { checkForUpdates } = require('./updateChecker');
 const Logger = require('./logger');
 
+const EXTRARESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'extraResources')
+  : path.join(__dirname, './extraResources');
+
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
 const TWITCH_REDIRECT_URI = 'http://localhost:3000';
@@ -37,7 +41,11 @@ let themeSettings = {
     overlayFont: 'Courier New',
     overlayFontSize: 48
 };
-const fontList = require('font-list')
+const getExtraResourcesPath = (...paths) => {
+    return path.join(EXTRARESOURCES_PATH, ...paths);
+};
+
+const fontList = require(getExtraResourcesPath('fontlist/index.js'));
 
     
 function ensureOverlayFile() {

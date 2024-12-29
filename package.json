@@ -1,6 +1,6 @@
 {
   "name": "twitch-marathon-timer",
-  "version": "1.0.0",
+  "version": "1.0.1-BETA-PreR2",
   "description": "A Twitch Timer that reacts to certain eventsub events to add time to a timer based on configured settings.",
   "main": "index.js",
   "scripts": {
@@ -60,7 +60,7 @@
       "!*.md"
     ],
     "extraResources": [
-      "bin/*"
+      "./extraResources/**"
     ],
     "win": {
       "target": [
