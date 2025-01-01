@@ -159,29 +159,29 @@ class CachedFontDetector extends FontDetector {
 }
 
 // Usage example
-async function main() {
+async function main(logger) {
     const fontDetector = new CachedFontDetector();
     
     try {
-        console.log('Analyzing fonts...');
+        logger.info('Analyzing fonts...');
         const analysis = await fontDetector.analyzeFonts();
         
-        console.log('\nFont Analysis Results:');
-        console.log('====================');
-        console.log(`Platform: ${analysis.analysis.systemInfo.platform}`);
-        console.log(`Detection Method: ${analysis.analysis.systemInfo.method}`);
-        console.log(`Total Fonts: ${analysis.totalFonts}`);
+        logger.info('\nFont Analysis Results:');
+        logger.info('====================');
+        logger.info(`Platform: ${analysis.analysis.systemInfo.platform}`);
+        logger.info(`Detection Method: ${analysis.analysis.systemInfo.method}`);
+        logger.info(`Total Fonts: ${analysis.totalFonts}`);
         
-        console.log('\nFirst Letter Distribution:');
+        logger.info('\nFirst Letter Distribution:');
         Object.entries(analysis.analysis.statistics.byFirstLetter)
             .sort((a, b) => a[0].localeCompare(b[0]))
             .forEach(([letter, count]) => {
-                console.log(`${letter}: ${count} fonts`);
+                logger.info(`${letter}: ${count} fonts`);
             });
 
         // Uncomment to see full font list
-        // console.log('\nAll Fonts:');
-        // analysis.fonts.forEach(font => console.log(font));
+        // logger.info('\nAll Fonts:');
+        // analysis.fonts.forEach(font => logger.info(font));
         
     } catch (error) {
         console.error('Error in font analysis:', error);

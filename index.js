@@ -213,7 +213,7 @@ async function checkStoredToken() {
             twitchAccessToken = storedToken.access_token;
             twitchUser = storedToken;
             mainWindow.webContents.send('twitch-auth-success', twitchUser);
-            fontDetector();
+            fontDetector(logger);
             //fontList.getFonts()
             // .then(fonts => {
             //     // Process the fonts to remove quotes
