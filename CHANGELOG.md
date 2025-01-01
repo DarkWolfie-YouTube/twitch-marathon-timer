@@ -4,16 +4,10 @@ This release is signed (for windows) and not verified. If the code signing is in
 
 # Changes!
 
-- Version v1
-- Initial Release for public use!
-- Full eventsub support for all events needed implmented.
-- Logging system for debugging and issue making. 
-
-- Font Support for overlay timer (if it doesn't display fonts, make an issue containing your log file.)
+- Fixed a font issue on mac (hopfully)
 
 
 # Known issues
 
 - MacOS Users can't see fonts. 
-    At this moment in time, I am not sure why this is what it is. I will fix this later as this was originally ment for a windows only project. If you know how to fix this, please fork and change what is needed to change and make a pull request.
-
+    This PreRelease is for testing of a fix for this issue.
