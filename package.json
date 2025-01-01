@@ -33,6 +33,7 @@
     "dotenv": "^16.4.7",
     "font-list": "^1.5.1",
     "node-fetch": "^3.3.2",
+    "system-font-families": "^0.6.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -58,9 +59,6 @@
       "!.angular/",
       "!*.map",
       "!*.md"
-    ],
-    "extraResources": [
-      "./extraResources/**"
     ],
     "win": {
       "target": [

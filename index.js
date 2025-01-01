@@ -7,10 +7,8 @@ const fs = require('fs');
 const TimerManager = require('./timerManager');
 const { checkForUpdates } = require('./updateChecker');
 const Logger = require('./logger');
+const fontDetector = require('./fontDetector').main;
 
-const EXTRARESOURCES_PATH = app.isPackaged
-  ? path.join(process.resourcesPath, 'extraResources')
-  : path.join(__dirname, './extraResources');
 
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
@@ -41,11 +39,9 @@ let themeSettings = {
     overlayFont: 'Courier New',
     overlayFontSize: 48
 };
-const getExtraResourcesPath = (...paths) => {
-    return path.join(EXTRARESOURCES_PATH, ...paths);
-};
 
-const fontList = require(getExtraResourcesPath('fontlist/index.js'));
+
+
 
     
 function ensureOverlayFile() {
@@ -217,20 +213,21 @@ async function checkStoredToken() {
             twitchAccessToken = storedToken.access_token;
             twitchUser = storedToken;
             mainWindow.webContents.send('twitch-auth-success', twitchUser);
-            fontList.getFonts()
-            .then(fonts => {
-                // Process the fonts to remove quotes
-                const formattedFonts = fonts.map(font => {
-                    // Remove quotes from the font name
-                    return font.replace(/"/g, '');
-                });
+            fontDetector();
+            //fontList.getFonts()
+            // .then(fonts => {
+            //     // Process the fonts to remove quotes
+            //     const formattedFonts = fonts.map(font => {
+            //         // Remove quotes from the font name
+            //         return font.replace(/"/g, '');
+            //     });
         
-                // Send the formatted font list to the renderer process
-                mainWindow.webContents.send('font-list', formattedFonts);
-            })
-            .catch(err => {
-                logger.error(err);
-            });
+            //     // Send the formatted font list to the renderer process
+            //     mainWindow.webContents.send('font-list', formattedFonts);
+            // })
+            // .catch(err => {
+            //     logger.error(err);
+            // });
 
             
             // Initialize EventSub client after successful token validation
