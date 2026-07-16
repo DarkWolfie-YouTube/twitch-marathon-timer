@@ -2,9 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
     minimize: () => ipcRenderer.invoke('window-minimize'),
+    maximize: () => ipcRenderer.invoke('window-maximize'),
     close: () => ipcRenderer.invoke('window-close'),
     // Twitch Auth
     login: () => ipcRenderer.invoke('twitch-login'),
+    cancelLogin: () => ipcRenderer.invoke('twitch-cancel-login'),
+    openTwitchActivation: () => ipcRenderer.invoke('twitch-open-activation'),
     logout: () => ipcRenderer.invoke('twitch-logout'),
     getUser: () => ipcRenderer.invoke('twitch-get-user'),
     requestUserInfo: () => {
@@ -18,6 +21,7 @@ contextBridge.exposeInMainWorld('api', {
     },
     onAuthSuccess: (callback) => ipcRenderer.on('twitch-auth-success', (event, user) => callback(user)),
     onAuthLogout: (callback) => ipcRenderer.on('twitch-auth-logout', () => callback()),
+    onAuthError: (callback) => ipcRenderer.on('twitch-auth-error', (event, error) => callback(error)),
     // Twitch Events
     onTwitchEvent: (callback) => ipcRenderer.on('twitch-event', (_, eventData) => callback(eventData)),
     sendSettingsUpdate: (settings) => {
@@ -53,5 +57,5 @@ contextBridge.exposeInMainWorld('api', {
     checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
     getUpdateSettings: () => ipcRenderer.invoke('get-update-settings'),
     setPreReleaseCheck: (enabled) => ipcRenderer.invoke('set-pre-release-check', enabled),
-    getFonts: (callback) => ipcRenderer.on('font-list', (_, data) => callback(data))
+    getFonts: () => ipcRenderer.invoke('get-fonts')
 });

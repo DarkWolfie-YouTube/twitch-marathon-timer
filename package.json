@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "electron .",
+    "test:unit": "node --test",
+    "check": "npm run test:unit && node --check index.js && node --check preload.js && node --check authManager.js && node --check eventSubClient.js && node --check websocketServer.js",
     "pack": "electron-builder --dir",
     "dist": "node build.js",
     "build": "electron-builder --win --publish never",
@@ -30,19 +32,23 @@
   "homepage": "https://github.com/DarkWolfie-YouTube/twitch-marathon-timer#readme",
   "dependencies": {
     "@electron/remote": "^2.1.2",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "dotenv": "^16.4.7",
-    "font-list": "^1.5.1",
+    "font-list": "^2.1.0",
     "node-fetch": "^3.3.2",
-    "system-font-families": "^0.6.0",
-    "ws": "^8.18.0"
+    "ws": "^8.21.1"
   },
   "devDependencies": {
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8"
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.darkwolfievt.twitchmarathontimer",
     "productName": "Twitch Marathon Timer",
+    "asarUnpack": [
+      "node_modules/font-list/libs/darwin/fontlist"
+    ],
     "directories": {
       "output": "dist"
     },

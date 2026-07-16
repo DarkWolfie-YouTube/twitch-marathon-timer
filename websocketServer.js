@@ -4,6 +4,17 @@ const path = require('path');
 const { app } = require('electron');
 const net = require('net');
 
+function normalizeThemeSettings(settings = {}) {
+    const transparentBackground = Boolean(settings.overlayTransparent);
+    return {
+        background: transparentBackground ? 'transparent' : (settings.overlayBackground || '#1f1f1f'),
+        transparentBackground,
+        text: settings.overlayText || '#ffffff',
+        font: settings.overlayFont || 'ui-monospace',
+        fontSize: `${settings.overlayFontSize || 48}px`
+    };
+}
+
 class WebSocketServer {
     constructor(port, logger) {
         this.port = port;
@@ -92,8 +103,9 @@ class WebSocketServer {
                 const savedTheme = JSON.parse(fs.readFileSync(themePath, 'utf-8'));
                 return {
                     background: savedTheme.background || '#1f1f1f',
+                    transparentBackground: Boolean(savedTheme.transparentBackground),
                     text: savedTheme.text || '#ffffff',
-                    font: savedTheme.font || 'Courier New',
+                    font: savedTheme.font || 'ui-monospace',
                     fontSize: savedTheme.fontSize || '48px'
                 };
             }
@@ -104,8 +116,9 @@ class WebSocketServer {
         // Default theme settings
         return {
             background: '#1f1f1f',
+            transparentBackground: false,
             text: '#ffffff',
-            font: 'Courier New',
+            font: 'ui-monospace',
             fontSize: '48px'
         };
     }
@@ -131,12 +144,7 @@ class WebSocketServer {
     updateTheme(settings) {
         this.logger.info('Updating theme settings:', settings);
         // Directly use the settings object from the UI
-        this.themeSettings = {
-            background: settings.overlayBackground || '#1f1f1f',
-            text: settings.overlayText || '#ffffff',
-            font: settings.overlayFont || 'Courier New',
-            fontSize: `${settings.overlayFontSize || 48}px`
-        };
+        this.themeSettings = normalizeThemeSettings(settings);
 
         // Save theme settings to file
         this.saveThemeSettings(this.themeSettings);
@@ -153,6 +161,7 @@ class WebSocketServer {
     handleSettingsUpdate(settings) {
         // Check if theme-related settings are present
         if (settings.overlayBackground || 
+            settings.overlayTransparent !== undefined ||
             settings.overlayText || 
             settings.overlayFont || 
             settings.overlayFontSize) {
@@ -162,3 +171,4 @@ class WebSocketServer {
 }
 
 module.exports = WebSocketServer;
+module.exports.normalizeThemeSettings = normalizeThemeSettings;

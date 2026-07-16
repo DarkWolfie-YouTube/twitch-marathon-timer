@@ -23,8 +23,24 @@ class EventSubClient {
         this.closedByUser = false;
         this.accessToken = null;
         this.broadcasterId = null;    
-        // Default timer settings
-        this.timerSettings = JSON.parse(fs.readFileSync(path.join(userDataPath, 'timer_settings.json'), 'utf-8'));
+        // Start with safe defaults on a fresh install, then merge saved values.
+        this.timerSettings = {
+            bitsTimeIncrement: 0.01,
+            tier1SubTime: 5,
+            tier2SubTime: 10,
+            tier3SubTime: 15
+        };
+        const settingsPath = path.join(userDataPath, 'timer_settings.json');
+        if (fs.existsSync(settingsPath)) {
+            try {
+                this.timerSettings = {
+                    ...this.timerSettings,
+                    ...JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
+                };
+            } catch (error) {
+                this.logger.warn('Unable to load timer settings for EventSub:', error);
+            }
+        }
     }
 
     async connect(mainWindow) {

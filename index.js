@@ -1,22 +1,20 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('node:path');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const EventSubClient = require('./eventSubClient');
 const AuthManager = require('./authManager');
 const fs = require('fs');
 const TimerManager = require('./timerManager');
 const { checkForUpdates } = require('./updateChecker');
 const Logger = require('./logger');
-const fontDetector = require('./fontDetector').main;
+const { CachedFontDetector } = require('./fontDetector');
 
 
 // Twitch OAuth Configuration
 const TWITCH_CLIENT_ID = 'zgq7tnjrd473cvia9xb2bn5s1v41i3';
-const TWITCH_REDIRECT_URI = 'http://localhost:3000';
-const TWITCH_SCOPES = ['user:read:email', 'channel:read:subscriptions', "bits:read"];
+const TWITCH_SCOPES = ['user:read:email', 'channel:read:subscriptions', 'bits:read'];
+const TOKEN_VALIDATION_INTERVAL = 60 * 60 * 1000;
 
 let mainWindow = null;
-let authWindow = null;
 let twitchAccessToken = null;
 let twitchUser = null;
 let eventSubClient = null;
@@ -24,6 +22,9 @@ let authManager = null;
 let timerManager = null;
 let overlayPath = null;
 let logger = null;
+let fontDetector = null;
+let authAttempt = null;
+let tokenValidationTimer = null;
 
 // Timer Settings Management
 let timerSettings = {
@@ -35,10 +36,16 @@ let timerSettings = {
 
 let themeSettings = {
     overlayBackground: '#1f1f1f',
+    overlayTransparent: false,
     overlayText: '#ffffff',
-    overlayFont: 'Courier New',
+    overlayFont: 'ui-monospace',
     overlayFontSize: 48
 };
+
+function finiteNumber(value, fallback) {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 
 
@@ -79,6 +86,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
+        minWidth: 860,
+        minHeight: 640,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -90,7 +99,7 @@ function createWindow() {
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
         titleBarOverlay: false,
-        resizable: false,
+        resizable: true,
         icon: path.join(__dirname, 'build/icon.ico')
     });
 
@@ -104,22 +113,28 @@ function createWindow() {
 
     // Initialize AuthManager with user data path
     const userDataPath = app.getPath('userData');
-    authManager = new AuthManager(userDataPath, logger, mainWindow);
+    authManager = new AuthManager(userDataPath, logger, mainWindow, {
+        clientId: TWITCH_CLIENT_ID,
+        requiredScopes: TWITCH_SCOPES
+    });
     timerManager = new TimerManager(logger);
     timerManager.setMainWindow(mainWindow);
     timerManager.loadTimerState();
+    fontDetector = new CachedFontDetector({ cacheDir: app.getPath('userData') });
 
 
     
     
 
     // Check for updates when the app starts (silently)
-    checkForUpdates(mainWindow, false, logger);
+    checkForUpdates(mainWindow, true, logger);
 
     // Check for existing valid token
     checkStoredToken();
 
     mainWindow.on('closed', () => {
+        cancelAuthAttempt();
+        clearInterval(tokenValidationTimer);
         if (eventSubClient) {
             eventSubClient.disconnect();
         }
@@ -136,107 +151,150 @@ function createWindow() {
 }
 
 // Twitch OAuth Functions
-function createAuthWindow() {
-    authWindow = new BrowserWindow({
-        width: 600,
-        height: 800,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true
-        }
-    });
+const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${TWITCH_REDIRECT_URI}&response_type=token&scope=${TWITCH_SCOPES.join('+')}`;
-    authWindow.loadURL(authUrl);
-
-    authWindow.webContents.on('will-navigate', (event, url) => {
-        handleAuthCallback(event, url);
-    });
-
-    authWindow.webContents.on('did-navigate', (event, url) => {
-        handleAuthCallback(event, url);
-    });
-
-    authWindow.on('closed', () => {
-        authWindow = null;
-    });
+function sendToRenderer(channel, data) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(channel, data);
+    }
 }
 
-async function handleAuthCallback(event, url) {
-    logger.info('Navigated to:', url);
-    if (url.includes('#access_token=')) {
-        const token = url.split('#access_token=')[1].split('&')[0];
-        twitchAccessToken = token;
-        
-        // Get user info
+function cancelAuthAttempt() {
+    if (authAttempt) {
+        authAttempt.cancelled = true;
+        authAttempt = null;
+    }
+}
+
+function toPublicTwitchUser(user) {
+    return {
+        id: user.id,
+        login: user.login,
+        display_name: user.display_name,
+        profile_image_url: user.profile_image_url,
+        email: user.email,
+        expiresAt: user.expiresAt
+    };
+}
+
+async function connectTwitchSession(user, tokenData) {
+    twitchAccessToken = tokenData.access_token;
+    twitchUser = toPublicTwitchUser({ ...user, expiresAt: tokenData.expiresAt });
+    sendToRenderer('twitch-auth-success', twitchUser);
+
+    if (eventSubClient) {
         try {
-            const response = await fetch('https://api.twitch.tv/helix/users', {
-                headers: {
-                    'Client-ID': TWITCH_CLIENT_ID,
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
-            twitchUser = data.data[0];
-            mainWindow.webContents.send('twitch-auth-success', twitchUser);
-
-            // Save token to file
-            const tokenData = {
-                access_token: token,
-                id: twitchUser.id,
-                login: twitchUser.login,
-                display_name: twitchUser.display_name,
-                profile_image_url: twitchUser.profile_image_url,
-                email: twitchUser.email,
-                scopes: TWITCH_SCOPES
-            };
-            await authManager.saveToken(tokenData);
-            if (!eventSubClient) {
-                eventSubClient = new EventSubClient(logger);
-                eventSubClient.updateToken(token, twitchUser.id);
-                eventSubClient.connect(mainWindow);
-            }
+            await eventSubClient.disconnect();
         } catch (error) {
-            logger.error('Error fetching user data:', error);
-        }
-
-        if (authWindow) {
-            authWindow.close();
+            logger.warn('Unable to close the previous Twitch EventSub session:', error);
         }
     }
+
+    eventSubClient = new EventSubClient(logger);
+    eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
+    eventSubClient.connect(mainWindow);
+    startTokenValidation();
+}
+
+async function pollDeviceAuthorization(attempt) {
+    try {
+        while (!attempt.cancelled && authAttempt === attempt && Date.now() < attempt.expiresAt) {
+            await wait(attempt.interval * 1000);
+            if (attempt.cancelled || authAttempt !== attempt) return;
+
+            const result = await authManager.exchangeDeviceCode(attempt.deviceCode, TWITCH_SCOPES);
+            if (attempt.cancelled || authAttempt !== attempt) return;
+            if (result.pending) continue;
+
+            const user = await authManager.fetchUser(result.tokenData.access_token);
+            const tokenData = {
+                ...user,
+                ...result.tokenData
+            };
+            const saved = await authManager.saveToken(tokenData);
+            if (!saved) {
+                throw new Error('Twitch returned a session without all required permissions. Please reconnect and approve each permission.');
+            }
+
+            await connectTwitchSession(user, tokenData);
+            authAttempt = null;
+            return;
+        }
+
+        if (authAttempt === attempt && !attempt.cancelled) {
+            authAttempt = null;
+            sendToRenderer('twitch-auth-error', { message: 'The Twitch login code expired. Please try again.' });
+        }
+    } catch (error) {
+        if (authAttempt === attempt && !attempt.cancelled) {
+            authAttempt = null;
+            logger.error('Twitch device authorization failed:', error);
+            sendToRenderer('twitch-auth-error', { message: error.message });
+        }
+    }
+}
+
+async function startTwitchLogin() {
+    cancelAuthAttempt();
+
+    try {
+        const deviceAuthorization = await authManager.startDeviceAuthorization(TWITCH_SCOPES);
+        const attempt = {
+            cancelled: false,
+            deviceCode: deviceAuthorization.device_code,
+            userCode: deviceAuthorization.user_code,
+            verificationUri: deviceAuthorization.verification_uri,
+            interval: Math.max(5, Number(deviceAuthorization.interval) || 5),
+            expiresAt: Date.now() + Number(deviceAuthorization.expires_in) * 1000
+        };
+        authAttempt = attempt;
+
+        shell.openExternal(attempt.verificationUri).catch(error => {
+            logger.warn('Unable to open the Twitch activation page:', error);
+        });
+        pollDeviceAuthorization(attempt);
+
+        return {
+            success: true,
+            userCode: attempt.userCode,
+            verificationUri: attempt.verificationUri,
+            expiresIn: deviceAuthorization.expires_in
+        };
+    } catch (error) {
+        logger.error('Unable to start Twitch login:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+function startTokenValidation() {
+    clearInterval(tokenValidationTimer);
+    tokenValidationTimer = setInterval(async () => {
+        const storedToken = await authManager.getStoredToken();
+        if (!storedToken) {
+            if (eventSubClient) await eventSubClient.disconnect();
+            eventSubClient = null;
+            twitchAccessToken = null;
+            twitchUser = null;
+            sendToRenderer('twitch-auth-logout');
+            sendToRenderer('twitch-auth-error', { message: 'Your Twitch session ended. Please reconnect.' });
+            clearInterval(tokenValidationTimer);
+            return;
+        }
+
+        twitchAccessToken = storedToken.access_token;
+        twitchUser = toPublicTwitchUser(storedToken);
+        if (eventSubClient) {
+            eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
+        }
+    }, TOKEN_VALIDATION_INTERVAL);
+    tokenValidationTimer.unref?.();
 }
 
 async function checkStoredToken() {
     try {
         const storedToken = await authManager.getStoredToken();
         if (storedToken) {
-            twitchAccessToken = storedToken.access_token;
-            twitchUser = storedToken;
-            mainWindow.webContents.send('twitch-auth-success', twitchUser);
-            fontDetector(logger);
-            //fontList.getFonts()
-            // .then(fonts => {
-            //     // Process the fonts to remove quotes
-            //     const formattedFonts = fonts.map(font => {
-            //         // Remove quotes from the font name
-            //         return font.replace(/"/g, '');
-            //     });
-        
-            //     // Send the formatted font list to the renderer process
-            //     mainWindow.webContents.send('font-list', formattedFonts);
-            // })
-            // .catch(err => {
-            //     logger.error(err);
-            // });
-
-            
-            // Initialize EventSub client after successful token validation
-            if (!eventSubClient) {
-                eventSubClient = new EventSubClient(logger);
-                eventSubClient.updateToken(twitchAccessToken, twitchUser.id);
-                eventSubClient.connect(mainWindow);
-
-            }
+            await connectTwitchSession(storedToken, storedToken);
         }
     } catch (error) {
         logger.error('Error checking stored token:', error);
@@ -244,43 +302,24 @@ async function checkStoredToken() {
     }
 }
 
-// Global method to send auth success
-
-
 // IPC Handlers
-ipcMain.handle('save-twitch-token', async (event, tokenData) => {
-    try {
-        const success = await authManager.saveToken(tokenData);
-        if (success) {
-            twitchAccessToken = tokenData.access_token;
-            twitchUser = tokenData;
-            mainWindow.webContents.send('twitch-auth-success', twitchUser);
-            
-            // Initialize EventSub client after new token
-            if (!eventSubClient) {
-                eventSubClient = new EventSubClient(logger);
-                eventSubClient.connect(mainWindow);
-            }
-            return { success: true };
-        } else {
-            return { success: false, error: 'Failed to save token' };
-        }
-    } catch (error) {
-        logger.error('Error saving token:', error);
-        return { success: false, error: error.message };
-    }
-});
-
 ipcMain.handle('twitch-logout', async () => {
     try {
+        cancelAuthAttempt();
+        clearInterval(tokenValidationTimer);
         if (eventSubClient) {
-            eventSubClient.disconnect();
+            try {
+                await eventSubClient.disconnect();
+            } catch (error) {
+                logger.warn('Unable to close Twitch EventSub during logout:', error);
+            }
             eventSubClient = null;
         }
+        await authManager.revokeToken(twitchAccessToken);
         authManager.clearToken();
         twitchAccessToken = null;
         twitchUser = null;
-        mainWindow.webContents.send('twitch-auth-logout');
+        sendToRenderer('twitch-auth-logout');
         return { success: true };
     } catch (error) {
         logger.error('Error during logout:', error);
@@ -300,6 +339,18 @@ ipcMain.handle('window-minimize', () => {
     if (mainWindow) mainWindow.minimize();
 });
 
+ipcMain.handle('window-maximize', () => {
+    if (!mainWindow) return false;
+
+    if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+        return false;
+    }
+
+    mainWindow.maximize();
+    return true;
+});
+
 ipcMain.handle('window-close', async () => {
     if (mainWindow) {
         if (eventSubClient) {
@@ -310,8 +361,24 @@ ipcMain.handle('window-close', async () => {
     }
 });
 
-ipcMain.handle('twitch-login', () => {
-    createAuthWindow();
+ipcMain.handle('twitch-login', () => startTwitchLogin());
+
+ipcMain.handle('twitch-cancel-login', () => {
+    cancelAuthAttempt();
+    return { success: true };
+});
+
+ipcMain.handle('twitch-open-activation', async () => {
+    if (!authAttempt?.verificationUri) {
+        return { success: false, error: 'There is no active Twitch login.' };
+    }
+
+    try {
+        await shell.openExternal(authAttempt.verificationUri);
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
 });
 
 ipcMain.handle('twitch-get-user', () => {
@@ -328,10 +395,10 @@ ipcMain.on('update-timer-settings', (event, settings) => {
     
     // Update timer settings
     timerSettings = {
-        bitsTimeIncrement: parseFloat(settings.bitsTimeIncrement) || 1,
-        tier1SubTime: parseFloat(settings.tier1SubTime) || 5,
-        tier2SubTime: parseFloat(settings.tier2SubTime) || 10,
-        tier3SubTime: parseFloat(settings.tier3SubTime) || 15
+        bitsTimeIncrement: finiteNumber(settings.bitsTimeIncrement, 0.01),
+        tier1SubTime: finiteNumber(settings.tier1SubTime, 5),
+        tier2SubTime: finiteNumber(settings.tier2SubTime, 10),
+        tier3SubTime: finiteNumber(settings.tier3SubTime, 15)
     };
     fs.writeFileSync(settingsPath, JSON.stringify(timerSettings), 'utf-8');
 
@@ -350,6 +417,14 @@ ipcMain.on('update-timer-settings', (event, settings) => {
 // IPC Handler to get current timer settings
 ipcMain.handle('get-timer-settings', () => {
     return timerSettings;
+});
+
+ipcMain.handle('get-fonts', async () => {
+    if (!fontDetector) {
+        fontDetector = new CachedFontDetector({ cacheDir: app.getPath('userData') });
+    }
+
+    return fontDetector.getFonts();
 });
 
 // IPC Handler to get overlay path
@@ -379,14 +454,14 @@ function loadSavedSettings() {
         if (fs.existsSync(settingsPath)) {
             const savedSettings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
             timerSettings = {
-                bitsTimeIncrement: parseFloat(savedSettings.bitsTimeIncrement) || 0.01,
-                tier1SubTime: parseFloat(savedSettings.tier1SubTime) || 5,
-                tier2SubTime: parseFloat(savedSettings.tier2SubTime) || 10,
-                tier3SubTime: parseFloat(savedSettings.tier3SubTime) || 15
+                bitsTimeIncrement: finiteNumber(savedSettings.bitsTimeIncrement, 0.01),
+                tier1SubTime: finiteNumber(savedSettings.tier1SubTime, 5),
+                tier2SubTime: finiteNumber(savedSettings.tier2SubTime, 10),
+                tier3SubTime: finiteNumber(savedSettings.tier3SubTime, 15)
             };
         }
     } catch (error) {
-        logger.error('Error loading timer settings:', error);
+        (logger || console).error('Error loading timer settings:', error);
     }
 }
 

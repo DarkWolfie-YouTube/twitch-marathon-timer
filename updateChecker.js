@@ -108,20 +108,52 @@ async function checkForUpdates(window, silent = false, logger) {
 }
 
 function compareVersions(current, latest) {
-    // Betas have "-BETA-PreR*" at the end
-    // check the beta PreR number if the beta tag is present
-    if (current.includes('-BETA-PreR')) {
-        const currentBetaPreR = current.split('-BETA-PreR')[1];
-        const latestBetaPreR = latest.split('-BETA-PreR')[1];
-        return compareVersions(currentBetaPreR, latestBetaPreR);
+    const parseVersion = (version) => {
+        const match = String(version).trim().replace(/^v/i, '').match(/^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
+        if (!match) return null;
+
+        return {
+            core: match.slice(1, 4).map(Number),
+            prerelease: match[4] || null
+        };
+    };
+
+    const currentVersion = parseVersion(current);
+    const latestVersion = parseVersion(latest);
+    if (!currentVersion || !latestVersion) {
+        return false;
     }
-    const currentParts = current.split('.').map(Number);
-    const latestParts = latest.split('.').map(Number);
 
     for (let i = 0; i < 3; i++) {
-        if (latestParts[i] > currentParts[i]) return true;
-        if (latestParts[i] < currentParts[i]) return false;
+        if (latestVersion.core[i] > currentVersion.core[i]) return true;
+        if (latestVersion.core[i] < currentVersion.core[i]) return false;
     }
+
+    // For the same core version, a stable release is newer than a pre-release.
+    if (currentVersion.prerelease && !latestVersion.prerelease) return true;
+    if (!currentVersion.prerelease || !latestVersion.prerelease) return false;
+
+    const currentParts = currentVersion.prerelease.match(/[A-Za-z]+|\d+/g) || [];
+    const latestParts = latestVersion.prerelease.match(/[A-Za-z]+|\d+/g) || [];
+    const partCount = Math.max(currentParts.length, latestParts.length);
+
+    for (let i = 0; i < partCount; i++) {
+        const currentPart = currentParts[i];
+        const latestPart = latestParts[i];
+        if (currentPart === undefined) return true;
+        if (latestPart === undefined) return false;
+
+        const currentNumber = Number(currentPart);
+        const latestNumber = Number(latestPart);
+        const bothNumeric = Number.isFinite(currentNumber) && Number.isFinite(latestNumber);
+        const comparison = bothNumeric
+            ? latestNumber - currentNumber
+            : latestPart.localeCompare(currentPart, undefined, { sensitivity: 'base' });
+
+        if (comparison > 0) return true;
+        if (comparison < 0) return false;
+    }
+
     return false;
 }
 
@@ -135,4 +167,4 @@ function getSettings() {
     return settings;
 }
 
-module.exports = { checkForUpdates, setPreReleaseCheck, getSettings };
+module.exports = { checkForUpdates, compareVersions, setPreReleaseCheck, getSettings };

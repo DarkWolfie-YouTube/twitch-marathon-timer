@@ -1,110 +1,143 @@
-const { platform } = require('os');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-const { app, BrowserWindow, ipcMain } = require('electron');
-const userDataPath = app.getPath('userData');
+const fs = require('node:fs').promises;
+const path = require('node:path');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
+const { platform } = require('node:os');
+const fontList = require('font-list');
+
+const execFileAsync = promisify(execFile);
+const CACHE_VERSION = 2;
 
 class FontDetector {
-    constructor() {
-        this.platform = platform();
-        
-        // Only load the packages if we're on the respective platforms
-        if (this.platform === 'darwin') {
-            this.SystemFonts = require('system-font-families');
-        } else if (this.platform === 'win32') {
-            this.fontList = require('font-list');
-        }
+    constructor(options = {}) {
+        this.platform = options.platform || platform();
+        this.execFile = options.execFile || execFileAsync;
     }
 
     async getFonts() {
         try {
-            switch (this.platform) {
-                case 'darwin':
-                    return await this.getMacFonts();
-                case 'win32':
-                    return await this.getWindowsFonts();
-                default:
-                    throw new Error(`Unsupported platform: ${this.platform}`);
+            // font-list supports both macOS and Windows. disableQuoting keeps the
+            // returned family names suitable for select values and CSSOM use.
+            const fonts = await fontList.getFonts({ disableQuoting: true });
+            const formattedFonts = this.formatFontList(fonts);
+
+            if (formattedFonts.length > 0) {
+                return formattedFonts;
             }
         } catch (error) {
-            console.error('Error detecting fonts:', error);
-            return [];
+            console.error('Primary font detection failed:', error);
         }
+
+        return this.getFallbackFonts();
     }
 
-    async getMacFonts() {
+    async getFallbackFonts() {
         try {
-            const systemFonts = new this.SystemFonts();
-            const fonts = await systemFonts.getFonts();
-            return this.formatFontList(fonts);
+            if (this.platform === 'darwin') {
+                return await this.getMacFontsFallback();
+            }
+
+            if (this.platform === 'win32') {
+                return await this.getWindowsFontsFallback();
+            }
+
+            if (this.platform === 'linux') {
+                return await this.getLinuxFontsFallback();
+            }
         } catch (error) {
-            console.error('Error getting Mac fonts:', error);
-            // Fallback to system_profiler if the package fails
-            return this.getMacFontsFallback();
+            console.error('Fallback font detection failed:', error);
         }
+
+        return [];
     }
 
     async getMacFontsFallback() {
-        try {
-            const { stdout } = await exec('system_profiler SPFontsDataType -json');
-            const fontData = JSON.parse(stdout);
-            const fonts = fontData.SPFontsDataType[0].Fonts.map(font => font._name);
-            return this.formatFontList(fonts);
-        } catch (error) {
-            console.error('Error getting Mac fonts using fallback:', error);
-            return [];
-        }
-    }
+        const { stdout } = await this.execFile(
+            'system_profiler',
+            ['SPFontsDataType', '-json'],
+            { maxBuffer: 32 * 1024 * 1024 }
+        );
+        const fontData = JSON.parse(stdout);
+        const fonts = [];
 
-    async getWindowsFonts() {
-        try {
-            const fonts = await this.fontList.getFonts();
-            return this.formatFontList(fonts);
-        } catch (error) {
-            console.error('Error getting Windows fonts:', error);
-            // Fallback to PowerShell if the package fails
-            return this.getWindowsFontsFallback();
+        for (const fontFile of fontData.SPFontsDataType || []) {
+            const faces = Array.isArray(fontFile.Fonts) ? fontFile.Fonts : [fontFile];
+            for (const face of faces) {
+                if (face && (face.family || face._name)) {
+                    fonts.push(face.family || face._name);
+                }
+            }
         }
+
+        return this.formatFontList(fonts);
     }
 
     async getWindowsFontsFallback() {
-        try {
-            const { stdout } = await exec('powershell -command "[System.Drawing.FontFamily]::Families | Select-Object Name"');
-            const fonts = stdout.split('\n')
-                .filter(line => line.trim())
-                .map(line => line.trim());
-            return this.formatFontList(fonts);
-        } catch (error) {
-            console.error('Error getting Windows fonts using fallback:', error);
-            return [];
-        }
+        const script = [
+            'Add-Type -AssemblyName System.Drawing',
+            '[System.Drawing.FontFamily]::Families | ForEach-Object { $_.Name }'
+        ].join('; ');
+        const { stdout } = await this.execFile(
+            'powershell.exe',
+            ['-NoProfile', '-NonInteractive', '-Command', script],
+            { maxBuffer: 8 * 1024 * 1024 }
+        );
+
+        return this.formatFontList(stdout.split(/\r?\n/));
+    }
+
+    async getLinuxFontsFallback() {
+        const { stdout } = await this.execFile(
+            'fc-list',
+            ['--format', '%{family}\n'],
+            { maxBuffer: 8 * 1024 * 1024 }
+        );
+
+        return this.formatFontList(stdout.split(/\r?\n/).flatMap(font => font.split(',')));
     }
 
     formatFontList(fonts) {
-        // Remove duplicates and sort
-        return [...new Set(fonts)]
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
+        const uniqueFonts = new Map();
+
+        for (const font of fonts || []) {
+            if (typeof font !== 'string') continue;
+
+            const normalized = String(font)
+                .trim()
+                .replace(/^(["'])(.*)\1$/, '$2')
+                .replace(/[\u0000-\u001F\u007F]/g, '')
+                .trim();
+
+            if (!normalized) continue;
+
+            const key = normalized.toLocaleLowerCase();
+            if (!uniqueFonts.has(key)) {
+                uniqueFonts.set(key, normalized);
+            }
+        }
+
+        return [...uniqueFonts.values()].sort((a, b) =>
+            a.localeCompare(b, undefined, { sensitivity: 'base' })
+        );
     }
 
     async analyzeFonts() {
         const fonts = await this.getFonts();
-        
+
         return {
             totalFonts: fonts.length,
-            fonts: fonts,
+            fonts,
             analysis: {
                 systemInfo: {
                     platform: this.platform,
-                    method: this.platform === 'darwin' ? 'system-font-families' : 'font-list'
+                    method: 'font-list'
                 },
                 statistics: {
                     total: fonts.length,
-                    // Group fonts by first letter
-                    byFirstLetter: fonts.reduce((acc, font) => {
+                    byFirstLetter: fonts.reduce((counts, font) => {
                         const firstLetter = font.charAt(0).toUpperCase();
-                        acc[firstLetter] = (acc[firstLetter] || 0) + 1;
-                        return acc;
+                        counts[firstLetter] = (counts[firstLetter] || 0) + 1;
+                        return counts;
                     }, {})
                 }
             }
@@ -112,88 +145,67 @@ class FontDetector {
     }
 }
 
-// Example usage with caching
 class CachedFontDetector extends FontDetector {
-    constructor(cacheTime = 24 * 60 * 60 * 1000) { // 24 hours default
-        super();
-        this.fs = require('fs').promises;
-        this.path = require('path');
-        this.cacheFile = this.path.join(userDataPath, `.font-cache-${this.platform}.json`);
-        this.cacheTime = cacheTime;
+    constructor(options = {}) {
+        super(options);
+        this.cacheTime = options.cacheTime || 24 * 60 * 60 * 1000;
+        this.cacheFile = options.cacheDir
+            ? path.join(options.cacheDir, `.font-cache-${this.platform}.json`)
+            : null;
     }
 
     async getFonts() {
-        // Try to get from cache first
         const cached = await this.getFromCache();
         if (cached) return cached;
 
-        // If no cache, get fresh data
         const fonts = await super.getFonts();
-        await this.saveToCache(fonts);
+        if (fonts.length > 0) {
+            await this.saveToCache(fonts);
+        }
         return fonts;
     }
 
     async getFromCache() {
+        if (!this.cacheFile) return null;
+
         try {
-            const data = await this.fs.readFile(this.cacheFile, 'utf8');
-            const cache = JSON.parse(data);
-            
-            if (Date.now() - cache.timestamp < this.cacheTime) {
-                return cache.fonts;
+            const cache = JSON.parse(await fs.readFile(this.cacheFile, 'utf8'));
+            const isFresh = Date.now() - cache.timestamp < this.cacheTime;
+            if (cache.version === CACHE_VERSION && isFresh && Array.isArray(cache.fonts) && cache.fonts.length > 0) {
+                return this.formatFontList(cache.fonts);
             }
-        } catch (error) {
-            return null;
+        } catch {
+            // A missing, old, or malformed cache should simply be regenerated.
         }
+
+        return null;
     }
 
     async saveToCache(fonts) {
-        const cache = {
-            timestamp: Date.now(),
-            fonts
-        };
-        await this.fs.writeFile(
-            this.cacheFile, 
-            JSON.stringify(cache, null, 2)
-        );
+        if (!this.cacheFile) return;
+
+        try {
+            await fs.mkdir(path.dirname(this.cacheFile), { recursive: true });
+            await fs.writeFile(this.cacheFile, JSON.stringify({
+                version: CACHE_VERSION,
+                timestamp: Date.now(),
+                fonts
+            }, null, 2));
+        } catch (error) {
+            console.error('Unable to cache the font list:', error);
+        }
     }
 }
 
-// Usage example
-async function main(logger) {
-    const fontDetector = new CachedFontDetector();
-    
-    try {
-        logger.info('Analyzing fonts...');
-        const analysis = await fontDetector.analyzeFonts();
-        
-        logger.info('\nFont Analysis Results:');
-        logger.info('====================');
-        logger.info(`Platform: ${analysis.analysis.systemInfo.platform}`);
-        logger.info(`Detection Method: ${analysis.analysis.systemInfo.method}`);
-        logger.info(`Total Fonts: ${analysis.totalFonts}`);
-        
-        logger.info('\nFirst Letter Distribution:');
-        Object.entries(analysis.analysis.statistics.byFirstLetter)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .forEach(([letter, count]) => {
-                logger.info(`${letter}: ${count} fonts`);
-            });
-
-        // Uncomment to see full font list
-        // logger.info('\nAll Fonts:');
-        // analysis.fonts.forEach(font => logger.info(font));
-        
-    } catch (error) {
-        console.error('Error in font analysis:', error);
-    }
+async function main(logger, options = {}) {
+    const fontDetector = new CachedFontDetector(options);
+    const analysis = await fontDetector.analyzeFonts();
+    logger.info(`Detected ${analysis.totalFonts} fonts on ${analysis.analysis.systemInfo.platform}`);
+    return analysis;
 }
 
-// Run the analysis
-
-
-// Export the class for use in other files
 module.exports = {
     FontDetector,
-    CachedFontDetector, 
+    CachedFontDetector,
     main
 };

@@ -11,14 +11,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 300px;
-            height: 150px;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             transition: background-color 0.3s ease;
         }
         .container {
-            width: 300px;
-            height: 150px;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -27,7 +27,10 @@
         #timer {
             font-size: 48px;
             font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-variant-numeric: tabular-nums slashed-zero;
+            line-height: 1;
+            white-space: nowrap;
             text-align: center;
             transition: color 0.3s ease;
         }
@@ -37,7 +40,7 @@
             right: 5px;
             font-size: 12px;
             color: #666;
-            font-family: Arial, sans-serif;
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
     </style>
 </head>
@@ -51,8 +54,9 @@
         const container = document.querySelector('.container');
         let currentTheme = {
             background: '#1f1f1f',
+            transparentBackground: false,
             text: '#ffffff',
-            font: 'Courier New',
+            font: 'ui-monospace',
             fontSize: '48px'
         };
 
@@ -73,14 +77,37 @@
 
         function updateTimer(data) {
             timerDiv.textContent = formatTime(data.remainingSeconds);
+            fitTimer();
+        }
+
+        function getFontStack(font) {
+            if (font === 'ui-monospace') {
+                return 'ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+            }
+            if (font === 'ui-sans-serif') {
+                return 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+            }
+            return `${JSON.stringify(String(font))}, ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace`;
+        }
+
+        function fitTimer() {
+            timerDiv.style.transform = 'none';
+            requestAnimationFrame(() => {
+                const availableWidth = Math.max(1, container.clientWidth - 16);
+                const scale = Math.min(1, availableWidth / timerDiv.scrollWidth);
+                timerDiv.style.transform = `scale(${scale})`;
+            });
         }
 
         function applyTheme(settings) {
-            container.style.backgroundColor = settings.background;
+            const background = settings.transparentBackground ? 'transparent' : settings.background;
+            document.body.style.backgroundColor = background;
+            container.style.backgroundColor = background;
             timerDiv.style.color = settings.text;
-            timerDiv.style.fontFamily = settings.font;
+            timerDiv.style.fontFamily = getFontStack(settings.font);
             timerDiv.style.fontSize = settings.fontSize;
             currentTheme = settings;
+            fitTimer();
         }
 
         function connectWebSocket() {
@@ -140,6 +167,7 @@
         };
         updateTimer(initialData);
         applyTheme(currentTheme);
+        window.addEventListener('resize', fitTimer);
     </script>
 </body>
 </html>
